@@ -15,10 +15,11 @@ expect() {
   ./gocc -o $S $TESTFILE
   cc $S -o $OUT
   ./$OUT
-  if [ $? -eq $2 ]; then
+  res=$?
+  if [ $res -eq $2 ]; then
     echo "OK ${1}"
   else
-    echo "failed ${1}"
+    echo "expected ${1}, but got ${res}"
   fi
 }
 
@@ -26,6 +27,7 @@ expect "1" 1
 expect "2" 2
 
 expect "1+2" 3
+expect "2-1" 1
 
 rm $TESTFILE
 rm -rf $ASM

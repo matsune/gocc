@@ -40,7 +40,15 @@ func main() {
 		switch v := e.(type) {
 		case BinaryExpr:
 			c.s += fmt.Sprintf("\tmovl $%s, %%eax\n", v.X.(IntVal).Token.Str)
-			c.s += fmt.Sprintf("\taddl $%s, %%eax\n", v.Y.(IntVal).Token.Str)
+			var op string
+			if v.Op.Kind == ADD {
+				op = "addl"
+			} else if v.Op.Kind == SUB {
+				op = "subl"
+			} else {
+				panic("binary op")
+			}
+			c.s += fmt.Sprintf("\t%s $%s, %%eax\n", op, v.Y.(IntVal).Token.Str)
 		case IntVal:
 			c.s += fmt.Sprintf("\tmovl $%s, %%eax\n", v.Token.Str)
 		}
