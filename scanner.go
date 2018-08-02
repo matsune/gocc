@@ -1,4 +1,4 @@
-package parser
+package main
 
 type Position struct {
 	Line   int

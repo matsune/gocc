@@ -3,18 +3,17 @@ package main
 import (
 	"flag"
 	"fmt"
-	"gocc/parser"
 	"io/ioutil"
 	"os"
 )
 
 func main() {
-	outName := flag.String("o", "main.s", "output")
+	outName := flag.String("o", "asm/gocc.s", "output")
 	flag.Parse()
 
 	if len(flag.Args()) != 1 {
 		fmt.Println("Please pass c file.")
-		fmt.Println("gocc [<Option>] *.c")
+		fmt.Println("gocc [<Option>] <filename>")
 		os.Exit(1)
 	}
 
@@ -23,37 +22,33 @@ func main() {
 		panic(err)
 	}
 
-	l := parser.NewLexer(source)
-
 	outFile, err := os.Create(*outName)
 	if err != nil {
 		panic(err)
 	}
 	defer outFile.Close()
 
+	p := NewParser(source)
+	p.next()
+
 	var c CodeGen
 	c.emitMain()
 	c.prologue()
-	c.s += fmt.Sprintf("\tmovl $%s, %%eax\n", l.Next().Str)
+
+	for !p.match(EOF) {
+		e := p.expr()
+		switch v := e.(type) {
+		case BinaryExpr:
+			c.s += fmt.Sprintf("\tmovl $%s, %%eax\n", v.X.(IntVal).Token.Str)
+			c.s += fmt.Sprintf("\taddl $%s, %%eax\n", v.Y.(IntVal).Token.Str)
+		case IntVal:
+			c.s += fmt.Sprintf("\tmovl $%s, %%eax\n", v.Token.Str)
+		}
+	}
+
 	c.epilogue()
 
 	if _, err := outFile.WriteString(c.s); err != nil {
 		panic(err)
 	}
-}
-
-type CodeGen struct {
-	s string
-}
-
-func (c *CodeGen) emitMain() {
-	c.s += ".global _main\n_main:\n"
-}
-
-func (c *CodeGen) prologue() {
-	c.s += "\tpushq %rbp\n\tmovq %rsp, %rbp\n"
-}
-
-func (c *CodeGen) epilogue() {
-	c.s += "\tpopq %rbp\nret\n"
 }
