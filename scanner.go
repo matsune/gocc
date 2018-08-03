@@ -33,7 +33,7 @@ func (s *Scanner) Get() byte {
 func (s *Scanner) Step() {
 	if s.Get() == '\n' {
 		s.pos.Line++
-		s.pos.Column = 0
+		s.pos.Column = 1
 	} else {
 		s.pos.Column++
 	}

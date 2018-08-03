@@ -1,24 +1,22 @@
 package main
 
-import "fmt"
-
 type Gen struct {
 	s string
 }
 
-type Inst string
+type Code int
 
 const (
-	ADDL  Inst = "addl"
-	SUBL       = "subl"
-	MOVL       = "movl"
-	IMULL      = "imull"
-	IDIVL      = "idivl"
-	CLTD       = "cltd"
-	MOVQ       = "movq"
-	PUSHQ      = "pushq"
-	POPQ       = "popq"
-	RET        = "Ret"
+	ADDL Code = iota
+	SUBL
+	MOVL
+	IMULL
+	IDIVL
+	CLTD
+	MOVQ
+	PUSHQ
+	POPQ
+	RET
 )
 
 type Reg int
@@ -32,23 +30,22 @@ const (
 	RSP
 )
 
-func (r Reg) String() string {
-	switch r {
-	case RAX:
-		return "%rax"
-	case RBX:
-		return "%rbx"
-	case EAX:
-		return "%eax"
-	case EBX:
-		return "%ebx"
-	case RBP:
-		return "%rbp"
-	case RSP:
-		return "%rsp"
-	default:
-		return ""
+type Operand interface {
+	Str() string
+}
+
+func (r Reg) Str() string    { return r.String() }
+func (i IntVal) Str() string { return "$" + string(i.Token.Str) }
+
+func (gen *Gen) emit(c Code, ops ...Operand) {
+	gen.s += "\t" + c.String() + "\t"
+	for i, v := range ops {
+		if i != 0 {
+			gen.s += ", "
+		}
+		gen.s += v.Str()
 	}
+	gen.s += "\n"
 }
 
 func (gen *Gen) emitMain() {
@@ -66,7 +63,6 @@ func (gen *Gen) epilogue() {
 }
 
 func (gen *Gen) expr(e Expr) {
-	fmt.Println("expr ", e)
 	switch v := e.(type) {
 	case BinaryExpr:
 		gen.binary(v, 0)
@@ -85,15 +81,15 @@ func (gen *Gen) binary(e BinaryExpr, i int) {
 
 	gen.emit(PUSHQ, RAX)
 
-	var op Inst
+	var c Code
 	if e.Op.Kind == ADD {
-		op = ADDL
+		c = ADDL
 	} else if e.Op.Kind == SUB {
-		op = SUBL
+		c = SUBL
 	} else if e.Op.Kind == MUL {
-		op = IMULL
+		c = IMULL
 	} else if e.Op.Kind == DIV {
-		op = IDIVL
+		c = IDIVL
 	} else {
 		panic("unimplemented")
 	}
@@ -107,28 +103,56 @@ func (gen *Gen) binary(e BinaryExpr, i int) {
 
 	gen.emit(POPQ, RBX)
 
-	if op == IDIVL {
+	if c == IDIVL {
 		gen.emit(CLTD)
 		gen.emit(IDIVL, EBX)
 	} else {
-		gen.emit(op, EBX, EAX)
+		gen.emit(c, EBX, EAX)
 	}
 }
 
-type Src interface {
-	Str() string
+func (c Code) String() string {
+	switch c {
+	case ADDL:
+		return "addl"
+	case SUBL:
+		return "subl"
+	case MOVL:
+		return "movl"
+	case IMULL:
+		return "imull"
+	case IDIVL:
+		return "idivl"
+	case CLTD:
+		return "cltd"
+	case MOVQ:
+		return "movq"
+	case PUSHQ:
+		return "pushq"
+	case POPQ:
+		return "popq"
+	case RET:
+		return "Ret"
+	default:
+		return ""
+	}
 }
 
-func (r Reg) Str() string    { return r.String() }
-func (i IntVal) Str() string { return "$" + string(i.Token.Str) }
-
-func (gen *Gen) emit(op Inst, src ...Src) {
-	gen.s += "\t" + string(op) + "\t"
-	for i, v := range src {
-		if i != 0 {
-			gen.s += ", "
-		}
-		gen.s += v.Str()
+func (r Reg) String() string {
+	switch r {
+	case RAX:
+		return "%rax"
+	case RBX:
+		return "%rbx"
+	case EAX:
+		return "%eax"
+	case EBX:
+		return "%ebx"
+	case RBP:
+		return "%rbp"
+	case RSP:
+		return "%rsp"
+	default:
+		return ""
 	}
-	gen.s += "\n"
 }
