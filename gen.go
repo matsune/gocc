@@ -6,16 +6,63 @@ type Gen struct {
 	s string
 }
 
+type Inst string
+
+const (
+	ADDL  Inst = "addl"
+	SUBL       = "subl"
+	MOVL       = "movl"
+	IMULL      = "imull"
+	IDIVL      = "idivl"
+	CLTD       = "cltd"
+	MOVQ       = "movq"
+	PUSHQ      = "pushq"
+	POPQ       = "popq"
+	RET        = "Ret"
+)
+
+type Reg int
+
+const (
+	RAX Reg = iota
+	RBX
+	EAX
+	EBX
+	RBP
+	RSP
+)
+
+func (r Reg) String() string {
+	switch r {
+	case RAX:
+		return "%rax"
+	case RBX:
+		return "%rbx"
+	case EAX:
+		return "%eax"
+	case EBX:
+		return "%ebx"
+	case RBP:
+		return "%rbp"
+	case RSP:
+		return "%rsp"
+	default:
+		return ""
+	}
+}
+
 func (gen *Gen) emitMain() {
 	gen.s += ".global _main\n_main:\n"
 }
 
 func (gen *Gen) prologue() {
-	gen.s += "\tpushq %rbp\n\tmovq %rsp, %rbp\n"
+	gen.emit(PUSHQ, RBP)
+	gen.emit(MOVQ, RSP, RBP)
 }
 
 func (gen *Gen) epilogue() {
-	gen.s += "\tpopq %rbp\nret\n"
+	gen.emit(POPQ, RBP)
+	gen.emit(RET)
 }
 
 func (gen *Gen) expr(e Expr) {
@@ -24,7 +71,7 @@ func (gen *Gen) expr(e Expr) {
 	case BinaryExpr:
 		gen.binary(v, 0)
 	case IntVal:
-		gen.movl(v, RAX)
+		gen.emit(MOVL, v, EAX)
 	}
 }
 
@@ -33,58 +80,55 @@ func (gen *Gen) binary(e BinaryExpr, i int) {
 	case BinaryExpr:
 		gen.binary(y, i)
 	case IntVal:
-		gen.movl(y, RAX)
+		gen.emit(MOVL, y, EAX)
 	}
 
-	gen.push(RAX)
+	gen.emit(PUSHQ, RAX)
 
-	var op string
+	var op Inst
 	if e.Op.Kind == ADD {
-		op = "addq"
+		op = ADDL
 	} else if e.Op.Kind == SUB {
-		op = "subq"
+		op = SUBL
 	} else if e.Op.Kind == MUL {
-		op = "imulq"
+		op = IMULL
 	} else if e.Op.Kind == DIV {
-		op = "idivq"
+		op = IDIVL
 	} else {
-		panic("binaryexpr")
+		panic("unimplemented")
 	}
 
 	switch x := e.X.(type) {
 	case BinaryExpr:
 		gen.binary(x, i)
 	case IntVal:
-		gen.movl(x, RAX)
+		gen.emit(MOVL, x, EAX)
 	}
 
-	gen.pop(RBX)
-	if op == "idivq" {
-		gen.s += fmt.Sprintf("\tcltd\n\tidivq %s\n", string(RBX))
+	gen.emit(POPQ, RBX)
+
+	if op == IDIVL {
+		gen.emit(CLTD)
+		gen.emit(IDIVL, EBX)
 	} else {
-		gen.emit(op, string(RBX), string(RAX))
+		gen.emit(op, EBX, EAX)
 	}
 }
 
-type Reg string
-
-const (
-	RAX Reg = "%rax"
-	RBX     = "%rbx"
-)
-
-func (gen *Gen) movl(e IntVal, r Reg) {
-	gen.emit("movq", "$"+string(e.Token.Str), string(r))
+type Src interface {
+	Str() string
 }
 
-func (gen *Gen) emit(op, src, dist string) {
-	gen.s += fmt.Sprintf("\t%s\t%s, %s\n", op, src, dist)
-}
+func (r Reg) Str() string    { return r.String() }
+func (i IntVal) Str() string { return "$" + string(i.Token.Str) }
 
-func (gen *Gen) push(r Reg) {
-	gen.s += fmt.Sprintf("\tpush\t%s\n", string(r))
-}
-
-func (gen *Gen) pop(r Reg) {
-	gen.s += fmt.Sprintf("\tpop\t%s\n", string(r))
+func (gen *Gen) emit(op Inst, src ...Src) {
+	gen.s += "\t" + string(op) + "\t"
+	for i, v := range src {
+		if i != 0 {
+			gen.s += ", "
+		}
+		gen.s += v.Str()
+	}
+	gen.s += "\n"
 }
