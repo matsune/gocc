@@ -35,6 +35,8 @@ func (gen *CodeGen) binary(e BinaryExpr) {
 		op = "addl"
 	} else if e.Op.Kind == SUB {
 		op = "subl"
+	} else if e.Op.Kind == MUL {
+		op = "imul"
 	} else {
 		panic("binaryexpr")
 	}
