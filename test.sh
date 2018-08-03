@@ -27,6 +27,8 @@ expect "1" 1
 expect "2" 2
 
 expect "1+2" 3
+expect "1+2+3+4" 10
+expect "5-8+10-2" 5
 expect "2-1" 1
 
 rm $TESTFILE

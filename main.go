@@ -31,32 +31,16 @@ func main() {
 	p := NewParser(source)
 	p.next()
 
-	var c CodeGen
-	c.emitMain()
-	c.prologue()
+	var gen CodeGen
+	gen.emitMain()
+	gen.prologue()
 
-	for !p.match(EOF) {
-		e := p.expr()
-		switch v := e.(type) {
-		case BinaryExpr:
-			c.s += fmt.Sprintf("\tmovl $%s, %%eax\n", v.X.(IntVal).Token.Str)
-			var op string
-			if v.Op.Kind == ADD {
-				op = "addl"
-			} else if v.Op.Kind == SUB {
-				op = "subl"
-			} else {
-				panic("binary op")
-			}
-			c.s += fmt.Sprintf("\t%s $%s, %%eax\n", op, v.Y.(IntVal).Token.Str)
-		case IntVal:
-			c.s += fmt.Sprintf("\tmovl $%s, %%eax\n", v.Token.Str)
-		}
-	}
+	e := p.expr()
+	gen.expr(e)
 
-	c.epilogue()
+	gen.epilogue()
 
-	if _, err := outFile.WriteString(c.s); err != nil {
+	if _, err := outFile.WriteString(gen.s); err != nil {
 		panic(err)
 	}
 }
