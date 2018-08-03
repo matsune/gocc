@@ -29,7 +29,6 @@ func main() {
 	defer outFile.Close()
 
 	p := NewParser(source)
-	p.next()
 
 	var gen Gen
 	gen.emitMain()

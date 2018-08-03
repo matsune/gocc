@@ -11,7 +11,9 @@ type Parser struct {
 }
 
 func NewParser(source []byte) *Parser {
-	return &Parser{lexer: NewLexer(source), token: NewToken(), stack: &Stack{}}
+	p := &Parser{lexer: NewLexer(source), token: NewToken(), stack: &Stack{}}
+	p.next()
+	return p
 }
 
 func (p *Parser) match(t TokenKind) bool {
