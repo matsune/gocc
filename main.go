@@ -31,7 +31,7 @@ func main() {
 	p := NewParser(source)
 	p.next()
 
-	var gen CodeGen
+	var gen Gen
 	gen.emitMain()
 	gen.prologue()
 

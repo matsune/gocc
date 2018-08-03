@@ -392,8 +392,13 @@ func (p *Parser) primaryExpr() Expr {
 		n := IntVal{Token: p.token}
 		p.next()
 		return n
+	case p.match(LPAREN):
+		p.next()
+		e := p.expr()
+		p.assert(RPAREN)
+		p.next()
+		return e
 	default:
-		fmt.Println(p.lexer.Pos())
 		panic("primaryExpr")
 	}
 }
