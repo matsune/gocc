@@ -45,6 +45,8 @@ expect "2-1" 1
 
 expect "3*4" 12
 expect "5/3" 1
+expect "4%3" 1
+expect "(3 * 4) % 2" 0
 
 expect "5 * 3 - 4" 11
 expect "2 + 3 * 4 - 6 / 3" 12

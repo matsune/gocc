@@ -22,10 +22,13 @@ const (
 type Reg int
 
 const (
-	RAX Reg = iota
-	RBX
-	EAX
+	EAX Reg = iota
 	EBX
+	ECX
+	EDX
+	RAX
+	RBX
+
 	RBP
 	RSP
 )
@@ -88,7 +91,7 @@ func (gen *Gen) binary(e BinaryExpr, i int) {
 		c = SUBL
 	} else if e.Op.Kind == MUL {
 		c = IMULL
-	} else if e.Op.Kind == DIV {
+	} else if e.Op.Kind == DIV || e.Op.Kind == REM {
 		c = IDIVL
 	} else {
 		panic("unimplemented")
@@ -106,6 +109,9 @@ func (gen *Gen) binary(e BinaryExpr, i int) {
 	if c == IDIVL {
 		gen.emit(CLTD)
 		gen.emit(IDIVL, EBX)
+		if e.Op.Kind == REM {
+			gen.emit(MOVL, EDX, EAX)
+		}
 	} else {
 		gen.emit(c, EBX, EAX)
 	}
@@ -140,14 +146,18 @@ func (c Code) String() string {
 
 func (r Reg) String() string {
 	switch r {
-	case RAX:
-		return "%rax"
-	case RBX:
-		return "%rbx"
 	case EAX:
 		return "%eax"
 	case EBX:
 		return "%ebx"
+	case ECX:
+		return "%ecx"
+	case EDX:
+		return "%edx"
+	case RAX:
+		return "%rax"
+	case RBX:
+		return "%rbx"
 	case RBP:
 		return "%rbp"
 	case RSP:
