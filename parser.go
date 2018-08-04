@@ -404,3 +404,70 @@ func (p *Parser) primaryExpr() Expr {
 		panic("primaryExpr")
 	}
 }
+
+func (p *Parser) isType() bool {
+	return p.matchs([]TokenKind{INT, CHAR, VOID, FLOAT, LONG, SHORT, DOUBLE})
+}
+
+func (p *Parser) readType() Type {
+	var t Type
+	switch p.token.Kind {
+	case INT:
+		t = Int_t
+	case CHAR:
+		t = Char_t
+	case VOID:
+		t = Void_t
+	case FLOAT:
+		t = Float_t
+	case LONG:
+		t = Long_t
+	case SHORT:
+		t = Short_t
+	case DOUBLE:
+		t = Double_t
+	default:
+		panic("readType")
+	}
+	p.next()
+	return t
+}
+
+func (p *Parser) readVarDef() Node {
+	t := p.readType()
+
+	p.assert(IDENT)
+	name := string(p.token.Str)
+	p.next()
+
+	var n Node
+	if p.match(LBRACK) {
+		panic("read subscript")
+		// var s []Expr
+		// for p.match(LBRACK) {
+		// 	s = append(s, p.readSubscript())
+		// }
+		// arr := &ast.ArrayDef{Type: t, Name: name, Subscript: s}
+		//
+		// if p.match(ASSIGN) {
+		// 	p.next()
+		// 	arr.Init = p.readArrayInit()
+		// 	// obj.IsInit = true
+		// }
+		// n = arr
+	} else {
+		v := VarDef{Type: t, Name: name}
+
+		if p.match(ASSIGN) {
+			p.next()
+			e := p.assignExpr()
+			v.Init = &e
+		}
+		n = v
+	}
+
+	p.assert(SEMICOLON)
+	p.next()
+
+	return n
+}

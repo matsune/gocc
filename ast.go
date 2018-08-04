@@ -3,7 +3,10 @@ package main
 type Kind int
 
 const (
-	BINARY_EXPR Kind = iota
+	VAR Kind = iota
+	AST_IDENT
+
+	BINARY_EXPR
 	COND_EXPR
 	UNARY_EXPR
 	ASSIGN_EXPR
@@ -11,15 +14,58 @@ const (
 	INT_VAL
 )
 
+type Type int
+
+const (
+	Int_t Type = iota
+	Void_t
+	Char_t
+	Float_t
+	Long_t
+	Short_t
+	Double_t
+)
+
+func (t Type) String() string {
+	switch t {
+	case Int_t:
+		return "int"
+	case Void_t:
+		return "void"
+	case Char_t:
+		return "char"
+	case Float_t:
+		return "float"
+	case Long_t:
+		return "long"
+	case Short_t:
+		return "short"
+	case Double_t:
+		return "double"
+	default:
+		panic("undefined Type")
+	}
+}
+
 type (
 	Node interface {
 		Kind() Kind
 	}
+)
 
+type (
 	Ident struct {
 		Token *Token
 	}
 
+	VarDef struct {
+		Type Type
+		Name string
+		Init *Expr
+	}
+)
+
+type (
 	Expr interface {
 		Node
 		Expr()
@@ -53,7 +99,8 @@ type (
 	}
 )
 
-// func (Ident) Kind() Kind { return IDENT }
+func (VarDef) Kind() Kind { return VAR }
+func (Ident) Kind() Kind  { return AST_IDENT }
 
 func (BinaryExpr) Kind() Kind { return BINARY_EXPR }
 func (CondExpr) Kind() Kind   { return COND_EXPR }

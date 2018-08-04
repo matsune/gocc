@@ -1,6 +1,7 @@
 package main
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -22,36 +23,7 @@ func TestIntVal(t *testing.T) {
 	intValExpect(t, v, "1")
 }
 
-func TestBinaryExpr1(t *testing.T) {
-	p := NewParser([]byte("1 + 2"))
-
-	e := p.expr()
-	v, ok := e.(BinaryExpr)
-	if !ok {
-		t.Errorf("expected type is BinaryExpr")
-		return
-	}
-	x, ok := v.X.(IntVal)
-	if !ok {
-		t.Errorf("expected x type is IntVal")
-		return
-	}
-	intValExpect(t, x, "1")
-
-	y, ok := v.Y.(IntVal)
-	if !ok {
-		t.Errorf("expected y type is IntVal")
-		return
-	}
-	intValExpect(t, y, "2")
-
-	if v.Op.Kind != ADD {
-		t.Errorf("expected op is %s", ADD)
-		return
-	}
-}
-
-func TestBinaryExpr2(t *testing.T) {
+func TestBinaryExpr(t *testing.T) {
 	/**
 	   Binary {
 	     X:  Binary{
@@ -167,4 +139,47 @@ func TestBinaryExpr2(t *testing.T) {
 		t.Errorf("expected op is %s", ADD)
 		return
 	}
+}
+
+func varTypeExpect(t *testing.T, v VarDef, ty Type) {
+	if v.Type != ty {
+		t.Errorf("expected type is %s, but got %s", ty, v.Type)
+	}
+}
+
+func varNameExpect(t *testing.T, v VarDef, name string) {
+	if v.Name != name {
+		t.Errorf("expected name is %s, but got %s", name, v.Name)
+	}
+}
+
+func TestReadVarDef(t *testing.T) {
+	p := NewParser([]byte("int a;"))
+	n := p.readVarDef()
+	v, ok := n.(VarDef)
+	if !ok {
+		t.Errorf("expected type is VarDef, but got %s", reflect.TypeOf(n))
+	}
+	varTypeExpect(t, v, Int_t)
+	varNameExpect(t, v, "a")
+	if v.Init != nil {
+		t.Errorf("expected varDef is not initialized")
+	}
+}
+
+func TestReadVarDefWithInit(t *testing.T) {
+	p := NewParser([]byte("int a = 3 + 4;"))
+	n := p.readVarDef()
+	v, ok := n.(VarDef)
+	if !ok {
+		t.Errorf("expected type is VarDef, but got %s", reflect.TypeOf(n))
+	}
+	varTypeExpect(t, v, Int_t)
+	varNameExpect(t, v, "a")
+	b, ok := (*v.Init).(BinaryExpr)
+	if !ok {
+		t.Errorf("expected type is BinaryExpr, but got %s", reflect.TypeOf(v.Init))
+	}
+	intValExpect(t, b.X.(IntVal), "3")
+	intValExpect(t, b.Y.(IntVal), "4")
 }

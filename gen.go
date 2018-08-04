@@ -68,16 +68,16 @@ func (gen *Gen) epilogue() {
 func (gen *Gen) expr(e Expr) {
 	switch v := e.(type) {
 	case BinaryExpr:
-		gen.binary(v, 0)
+		gen.binary(v)
 	case IntVal:
 		gen.emit(MOVL, v, EAX)
 	}
 }
 
-func (gen *Gen) binary(e BinaryExpr, i int) {
+func (gen *Gen) binary(e BinaryExpr) {
 	switch y := e.Y.(type) {
 	case BinaryExpr:
-		gen.binary(y, i)
+		gen.binary(y)
 	case IntVal:
 		gen.emit(MOVL, y, EAX)
 	}
@@ -99,7 +99,7 @@ func (gen *Gen) binary(e BinaryExpr, i int) {
 
 	switch x := e.X.(type) {
 	case BinaryExpr:
-		gen.binary(x, i)
+		gen.binary(x)
 	case IntVal:
 		gen.emit(MOVL, x, EAX)
 	}
