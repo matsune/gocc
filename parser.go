@@ -124,6 +124,18 @@ func (p *Parser) next() {
 	p.token = p.lexer.Next()
 }
 
+func (p *Parser) isEnd() bool {
+	return p.match(EOF)
+}
+
+func (p *Parser) parse() Node {
+	if p.isType() {
+		return p.readVarDef()
+	} else {
+		return p.expr()
+	}
+}
+
 func (p *Parser) expr() Expr {
 	return p.assignExpr()
 }

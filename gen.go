@@ -1,7 +1,10 @@
 package main
 
+import "fmt"
+
 type Gen struct {
-	s string
+	s   string
+	pos int
 }
 
 type Code int
@@ -117,6 +120,15 @@ func (gen *Gen) binary(e BinaryExpr) {
 	}
 }
 
+func (gen *Gen) varDef(n *VarDef) {
+	if n.Init != nil {
+		gen.expr(*n.Init)
+	}
+	gen.pos += n.Type.Size()
+	n.Pos = gen.pos
+	gen.s += fmt.Sprintf("\tmovl\t%%eax, %d(%%rbp)\n", -n.Pos)
+}
+
 func (c Code) String() string {
 	switch c {
 	case ADDL:
@@ -138,7 +150,7 @@ func (c Code) String() string {
 	case POPQ:
 		return "popq"
 	case RET:
-		return "Ret"
+		return "ret"
 	default:
 		return ""
 	}

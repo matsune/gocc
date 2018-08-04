@@ -26,6 +26,15 @@ const (
 	Double_t
 )
 
+func (t Type) Size() int {
+	switch t {
+	case Int_t:
+		return 4
+	default:
+		panic("unimplemented type size")
+	}
+}
+
 func (t Type) String() string {
 	switch t {
 	case Int_t:
@@ -62,6 +71,7 @@ type (
 		Type Type
 		Name string
 		Init *Expr
+		Pos  int // pos from %rbp
 	}
 )
 

@@ -52,5 +52,8 @@ expect "5 * 3 - 4" 11
 expect "2 + 3 * 4 - 6 / 3" 12
 expect "(4 * 5 / 2 + 4) * 3 - 1" 41
 
+expect "int a = 4;" 4
+expect "int a = 2 * (5 + 10 / 2);" 20
+
 rm $TESTFILE
 rm $OUT

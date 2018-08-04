@@ -34,8 +34,19 @@ func main() {
 	gen.emitMain()
 	gen.prologue()
 
-	e := p.expr()
-	gen.expr(e)
+	for !p.isEnd() {
+		n := p.parse()
+
+		switch v := n.(type) {
+		case Expr:
+			gen.expr(v)
+		case VarDef:
+			gen.varDef(&v)
+			fmt.Println(v)
+		default:
+			panic("unimplemented")
+		}
+	}
 
 	gen.epilogue()
 
