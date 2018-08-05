@@ -3,7 +3,9 @@ package main
 type Kind int
 
 const (
-	VAR Kind = iota
+	VAR_DEF Kind = iota
+	FUNC_DEF
+	FUNC_ARG
 	AST_IDENT
 
 	BINARY_EXPR
@@ -12,6 +14,8 @@ const (
 	ASSIGN_EXPR
 
 	INT_VAL
+
+	BLOCK_STMT
 )
 
 type Type int
@@ -72,6 +76,18 @@ type (
 		Name string
 		Init *Expr
 	}
+
+	FuncDef struct {
+		Type  Type
+		Name  string
+		Args  []FuncArg
+		Block BlockStmt
+	}
+
+	FuncArg struct {
+		Type Type
+		Name *Token
+	}
 )
 
 type (
@@ -108,13 +124,23 @@ type (
 	}
 )
 
-func (VarDef) Kind() Kind { return VAR }
-func (Ident) Kind() Kind  { return AST_IDENT }
+type (
+	BlockStmt struct {
+		Nodes []Node
+	}
+)
+
+func (VarDef) Kind() Kind  { return VAR_DEF }
+func (FuncDef) Kind() Kind { return FUNC_DEF }
+func (FuncArg) Kind() Kind { return FUNC_ARG }
+func (Ident) Kind() Kind   { return AST_IDENT }
 
 func (BinaryExpr) Kind() Kind { return BINARY_EXPR }
 func (CondExpr) Kind() Kind   { return COND_EXPR }
 func (UnaryExpr) Kind() Kind  { return UNARY_EXPR }
 func (AssignExpr) Kind() Kind { return ASSIGN_EXPR }
+
+func (BlockStmt) Kind() Kind { return BLOCK_STMT }
 
 func (Ident) Expr()      {}
 func (BinaryExpr) Expr() {}

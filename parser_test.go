@@ -183,3 +183,37 @@ func TestReadVarDefWithInit(t *testing.T) {
 	intValExpect(t, b.X.(IntVal), "3")
 	intValExpect(t, b.Y.(IntVal), "4")
 }
+
+func TestReadFuncDef(t *testing.T) {
+	p := NewParser([]byte("int main(int argc) { int a = 2 + 4; }"))
+	f := p.readFuncDef()
+	if f.Type != Int_t {
+		t.Errorf("expected type is %s, but got %s", Int_t, f.Type)
+	}
+	if f.Name != "main" {
+		t.Errorf("expected name is %s, but got %s", "main", f.Name)
+	}
+	if len(f.Args) != 1 {
+		t.Errorf("expected args count is %d, but got %d", 1, len(f.Args))
+	}
+	if f.Args[0].Type != Int_t {
+		t.Errorf("expected type is %s, but got %s", Int_t, f.Args[0].Type)
+	}
+	if f.Args[0].Name.String() != "argc" {
+		t.Errorf("expected type is %s, but got %s", "argc", f.Args[0].Name)
+	}
+	if len(f.Block.Nodes) != 1 {
+		t.Errorf("expected block nodes count is %d, but got %d", 1, len(f.Block.Nodes))
+	}
+
+	v, ok := f.Block.Nodes[0].(VarDef)
+	if !ok {
+		t.Errorf("expected block nodes[0] is VarDef, but got %s", reflect.TypeOf(f.Block.Nodes[0]))
+	}
+	if v.Type != Int_t {
+		t.Errorf("expected type is %s, but got %s", Int_t, v.Type)
+	}
+	if v.Name != "a" {
+		t.Errorf("expected name is %s, but got %s", "a", v.Name)
+	}
+}

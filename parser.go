@@ -487,3 +487,67 @@ func (p *Parser) readVarDef() Node {
 
 	return n
 }
+
+func (p *Parser) readFuncDef() FuncDef {
+	t := p.readType()
+
+	p.assert(IDENT)
+	name := string(p.token.Str)
+	p.next()
+
+	p.assert(LPAREN)
+	p.next()
+
+	args := p.readFuncArgs()
+
+	p.assert(RPAREN)
+	p.next()
+
+	block := p.blockStmt()
+
+	return FuncDef{Type: t, Name: name, Args: args, Block: block}
+}
+
+func (p *Parser) readFuncArgs() []FuncArg {
+	var res []FuncArg
+	for {
+		res = append(res, p.readFuncArg())
+		if !p.match(COMMA) {
+			break
+		}
+		p.next()
+	}
+	return res
+}
+
+func (p *Parser) readFuncArg() FuncArg {
+	var n FuncArg
+	n.Type = p.readType()
+
+	p.assert(IDENT)
+	n.Name = p.token
+	p.next()
+
+	return n
+}
+
+func (p *Parser) blockStmt() BlockStmt {
+	p.assert(LBRACE)
+	p.next()
+	n := BlockStmt{}
+
+	for !p.match(RBRACE) {
+		if p.isType() {
+			d := p.readVarDef()
+			n.Nodes = append(n.Nodes, d)
+		} else {
+			// - TODO:
+			panic("stmt is not implemented")
+			// stmt := p.stmt()
+			// n.Nodes = append(n.Nodes, stmt)
+		}
+	}
+	p.next()
+
+	return n
+}
