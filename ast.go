@@ -33,7 +33,7 @@ const (
 func (t Type) Size() int {
 	switch t {
 	case Int_t:
-		return 12
+		return 4
 	default:
 		panic("unimplemented type size")
 	}

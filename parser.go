@@ -129,7 +129,8 @@ func (p *Parser) parse() Node {
 	} else if p.isType() {
 		return p.readVarDef()
 	} else {
-		panic("unexpected")
+		return p.expr()
+		// panic("unexpected")
 	}
 }
 
@@ -211,6 +212,10 @@ loop:
 			break loop
 		default:
 			p.next()
+		}
+
+		if p.match(EOF) {
+			break loop
 		}
 	}
 	return isFunc

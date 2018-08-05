@@ -23,9 +23,8 @@ const (
 	IMULL
 	IDIVL
 	CLTD
-	MOVQ
-	PUSHQ
-	POPQ
+	PUSHL
+	POPL
 	RET
 )
 
@@ -36,11 +35,9 @@ const (
 	EBX
 	ECX
 	EDX
-	RAX
-	RBX
 
-	RBP
-	RSP
+	EBP
+	ESP
 )
 
 type Operand interface {
@@ -79,13 +76,13 @@ func (gen *Gen) emitMain() {
 }
 
 func (gen *Gen) prologue() {
-	gen.emit(PUSHQ, RBP)
-	gen.emit(MOVQ, RSP, RBP)
+	gen.emit(PUSHL, EBP)
+	gen.emit(MOVL, ESP, EBP)
 }
 
 func (gen *Gen) epilogue() {
-	gen.emit(MOVQ, RBP, RSP)
-	gen.emit(POPQ, RBP)
+	gen.emit(MOVL, EBP, ESP)
+	gen.emit(POPL, EBP)
 	gen.emit(RET)
 }
 
@@ -95,7 +92,7 @@ func (gen *Gen) expr(e Expr) {
 		gen.binary(v)
 	case Ident:
 		if pos, ok := gen.lookup(v.Token.String()); ok {
-			gen.s += fmt.Sprintf("\tmovl\t%d(%%rbp), %%eax\n", -pos)
+			gen.s += fmt.Sprintf("\tmovl\t%d(%%ebp), %%eax\n", -pos)
 		} else {
 			panic("ident is not defined")
 		}
@@ -106,12 +103,12 @@ func (gen *Gen) expr(e Expr) {
 
 func (gen *Gen) binary(e BinaryExpr) {
 	gen.expr(e.X)
-	gen.emit(PUSHQ, RAX)
+	gen.emit(PUSHL, EAX)
 
 	gen.expr(e.Y)
 	gen.emit(MOVL, EAX, EBX)
 
-	gen.emit(POPQ, RAX)
+	gen.emit(POPL, EAX)
 
 	var c Code
 	if e.Op.Kind == ADD {
@@ -143,7 +140,8 @@ func (gen *Gen) varDef(n VarDef) {
 	}
 	gen.pos += n.Type.Size()
 	gen.add(n.Name, gen.pos)
-	gen.s += fmt.Sprintf("\tmovl\t%%eax, %d(%%rbp)\n", -gen.pos)
+	gen.s += fmt.Sprintf("\tsubl\t$%d, %%esp\n", n.Type.Size())
+	gen.s += fmt.Sprintf("\tmovl\t%%eax, %d(%%ebp)\n", -gen.pos)
 }
 
 func (c Code) String() string {
@@ -160,12 +158,10 @@ func (c Code) String() string {
 		return "idivl"
 	case CLTD:
 		return "cltd"
-	case MOVQ:
-		return "movq"
-	case PUSHQ:
-		return "pushq"
-	case POPQ:
-		return "popq"
+	case PUSHL:
+		return "pushl"
+	case POPL:
+		return "popl"
 	case RET:
 		return "ret"
 	default:
@@ -183,14 +179,10 @@ func (r Reg) String() string {
 		return "%ecx"
 	case EDX:
 		return "%edx"
-	case RAX:
-		return "%rax"
-	case RBX:
-		return "%rbx"
-	case RBP:
-		return "%rbp"
-	case RSP:
-		return "%rsp"
+	case EBP:
+		return "%ebp"
+	case ESP:
+		return "%esp"
 	default:
 		return ""
 	}
