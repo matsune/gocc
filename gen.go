@@ -2,9 +2,16 @@ package main
 
 import "fmt"
 
+type Map map[string]int
+
 type Gen struct {
 	s   string
 	pos int
+	m   Map
+}
+
+func NewGen() *Gen {
+	return &Gen{s: "", pos: 0, m: Map{}}
 }
 
 type Code int
@@ -40,6 +47,19 @@ type Operand interface {
 	Str() string
 }
 
+func (gen *Gen) add(n string, p int) {
+	gen.m[n] = p
+}
+
+func (gen *Gen) lookup(n string) (int, bool) {
+	for k, v := range gen.m {
+		if k == n {
+			return v, true
+		}
+	}
+	return 0, false
+}
+
 func (r Reg) Str() string    { return r.String() }
 func (i IntVal) Str() string { return "$" + string(i.Token.Str) }
 
@@ -64,6 +84,7 @@ func (gen *Gen) prologue() {
 }
 
 func (gen *Gen) epilogue() {
+	gen.emit(MOVQ, RBP, RSP)
 	gen.emit(POPQ, RBP)
 	gen.emit(RET)
 }
@@ -72,20 +93,25 @@ func (gen *Gen) expr(e Expr) {
 	switch v := e.(type) {
 	case BinaryExpr:
 		gen.binary(v)
+	case Ident:
+		if pos, ok := gen.lookup(v.Token.String()); ok {
+			gen.s += fmt.Sprintf("\tmovl\t%d(%%rbp), %%eax\n", -pos)
+		} else {
+			panic("ident is not defined")
+		}
 	case IntVal:
 		gen.emit(MOVL, v, EAX)
 	}
 }
 
 func (gen *Gen) binary(e BinaryExpr) {
-	switch y := e.Y.(type) {
-	case BinaryExpr:
-		gen.binary(y)
-	case IntVal:
-		gen.emit(MOVL, y, EAX)
-	}
-
+	gen.expr(e.X)
 	gen.emit(PUSHQ, RAX)
+
+	gen.expr(e.Y)
+	gen.emit(MOVL, EAX, EBX)
+
+	gen.emit(POPQ, RAX)
 
 	var c Code
 	if e.Op.Kind == ADD {
@@ -100,15 +126,6 @@ func (gen *Gen) binary(e BinaryExpr) {
 		panic("unimplemented")
 	}
 
-	switch x := e.X.(type) {
-	case BinaryExpr:
-		gen.binary(x)
-	case IntVal:
-		gen.emit(MOVL, x, EAX)
-	}
-
-	gen.emit(POPQ, RBX)
-
 	if c == IDIVL {
 		gen.emit(CLTD)
 		gen.emit(IDIVL, EBX)
@@ -120,13 +137,13 @@ func (gen *Gen) binary(e BinaryExpr) {
 	}
 }
 
-func (gen *Gen) varDef(n *VarDef) {
+func (gen *Gen) varDef(n VarDef) {
 	if n.Init != nil {
 		gen.expr(*n.Init)
 	}
 	gen.pos += n.Type.Size()
-	n.Pos = gen.pos
-	gen.s += fmt.Sprintf("\tmovl\t%%eax, %d(%%rbp)\n", -n.Pos)
+	gen.add(n.Name, gen.pos)
+	gen.s += fmt.Sprintf("\tmovl\t%%eax, %d(%%rbp)\n", -gen.pos)
 }
 
 func (c Code) String() string {

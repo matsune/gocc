@@ -29,7 +29,7 @@ const (
 func (t Type) Size() int {
 	switch t {
 	case Int_t:
-		return 4
+		return 12
 	default:
 		panic("unimplemented type size")
 	}
@@ -71,7 +71,6 @@ type (
 		Type Type
 		Name string
 		Init *Expr
-		Pos  int // pos from %rbp
 	}
 )
 
@@ -117,6 +116,7 @@ func (CondExpr) Kind() Kind   { return COND_EXPR }
 func (UnaryExpr) Kind() Kind  { return UNARY_EXPR }
 func (AssignExpr) Kind() Kind { return ASSIGN_EXPR }
 
+func (Ident) Expr()      {}
 func (BinaryExpr) Expr() {}
 func (CondExpr) Expr()   {}
 func (UnaryExpr) Expr()  {}

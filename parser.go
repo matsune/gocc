@@ -402,6 +402,10 @@ func (p *Parser) postfixExpr2(e Expr) Expr {
 
 func (p *Parser) primaryExpr() Expr {
 	switch {
+	case p.match(IDENT):
+		n := Ident{Token: p.token}
+		p.next()
+		return n
 	case p.match(INT_CONST):
 		n := IntVal{Token: p.token}
 		p.next()

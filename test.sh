@@ -22,15 +22,15 @@ TEST_NUM=0
 expect() {
   TEST_NUM=`expr $TEST_NUM + 1`
   echo "${1}" > $TESTFILE
-  ./gocc -o "${ASM}/${TEST_NUM}.s" $TESTFILE
+  ./gocc -o "${ASM}/${TEST_NUM}.s" $TESTFILE || return
   cc "${ASM}/${TEST_NUM}.s" -o $OUT
   ./$OUT
   res=$?
   if [ $res -eq $2 ]; then
-    echo "[OK test${TEST_NUM}] ${1}"
+    echo "[OK test${TEST_NUM}] '${1}' => ${res}"
   else
     echo ${RED}
-    echo "[Failed test${TEST_NUM}] ${1} expected ${2}, but got ${res}"
+    echo "[Failed test${TEST_NUM}] '${1}' expected ${2}, but got ${res}"
     echo ${SET}
   fi
 }
@@ -54,6 +54,10 @@ expect "(4 * 5 / 2 + 4) * 3 - 1" 41
 
 expect "int a = 4;" 4
 expect "int a = 2 * (5 + 10 / 2);" 20
+expect "int a = 3; int b = a + 4;" 7
+expect "int a = 3; int b = 4 + a;" 7
+expect "int a = 5; int b = a + 8; int c = a + b + 12;" 30
+
 
 rm $TESTFILE
 rm $OUT

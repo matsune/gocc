@@ -30,7 +30,7 @@ func main() {
 
 	p := NewParser(source)
 
-	var gen Gen
+	gen := NewGen()
 	gen.emitMain()
 	gen.prologue()
 
@@ -41,8 +41,7 @@ func main() {
 		case Expr:
 			gen.expr(v)
 		case VarDef:
-			gen.varDef(&v)
-			fmt.Println(v)
+			gen.varDef(v)
 		default:
 			panic("unimplemented")
 		}
