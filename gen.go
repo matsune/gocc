@@ -25,6 +25,7 @@ const (
 	CLTD
 	PUSHL
 	POPL
+	LEAVE
 	RET
 )
 
@@ -81,8 +82,7 @@ func (gen *Gen) prologue() {
 }
 
 func (gen *Gen) epilogue() {
-	gen.emit(MOVL, EBP, ESP)
-	gen.emit(POPL, EBP)
+	gen.emit(LEAVE)
 	gen.emit(RET)
 }
 
@@ -162,6 +162,8 @@ func (c Code) String() string {
 		return "pushl"
 	case POPL:
 		return "popl"
+	case LEAVE:
+		return "leave"
 	case RET:
 		return "ret"
 	default:
