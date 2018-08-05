@@ -42,11 +42,6 @@ func (p *Parser) pop() {
 	p.lexer.Reset(pos)
 }
 
-// just remove last pushed token and position from stack
-func (p *Parser) remove() {
-	p.stack.pop()
-}
-
 var (
 	typeKeys = []TokenKind{
 		INT,
@@ -129,12 +124,144 @@ func (p *Parser) isEnd() bool {
 }
 
 func (p *Parser) parse() Node {
-	if p.isType() {
+	if p.isFuncDef() {
+		return p.readFuncDef()
+	} else if p.isType() {
 		return p.readVarDef()
 	} else {
-		return p.expr()
+		panic("unexpected")
 	}
 }
+
+/**
+read def
+*/
+
+func (p *Parser) readVarDef() Node {
+	t := p.readType()
+
+	p.assert(IDENT)
+	name := string(p.token.Str)
+	p.next()
+
+	var n Node
+	if p.match(LBRACK) {
+		panic("read subscript")
+
+	} else {
+		v := VarDef{Type: t, Name: name}
+
+		if p.match(ASSIGN) {
+			p.next()
+			e := p.assignExpr()
+			v.Init = &e
+		}
+		n = v
+	}
+
+	p.assert(SEMICOLON)
+	p.next()
+
+	return n
+}
+
+func (p *Parser) isType() bool {
+	return p.matchs([]TokenKind{INT, CHAR, VOID, FLOAT, LONG, SHORT, DOUBLE})
+}
+
+func (p *Parser) readType() Type {
+	var t Type
+	switch p.token.Kind {
+	case INT:
+		t = Int_t
+	case CHAR:
+		t = Char_t
+	case VOID:
+		t = Void_t
+	case FLOAT:
+		t = Float_t
+	case LONG:
+		t = Long_t
+	case SHORT:
+		t = Short_t
+	case DOUBLE:
+		t = Double_t
+	default:
+		panic("readType")
+	}
+	p.next()
+	return t
+}
+
+func (p *Parser) isFuncDef() bool {
+	p.push()
+	defer p.pop()
+
+	var isFunc bool
+loop:
+	for {
+		switch {
+		case p.match(RPAREN):
+			p.next()
+			if p.match(LBRACE) {
+				isFunc = true
+				break loop
+			}
+		case p.match(SEMICOLON):
+			break loop
+		default:
+			p.next()
+		}
+	}
+	return isFunc
+}
+
+func (p *Parser) readFuncDef() FuncDef {
+	t := p.readType()
+
+	p.assert(IDENT)
+	name := string(p.token.Str)
+	p.next()
+
+	p.assert(LPAREN)
+	p.next()
+
+	args := p.readFuncArgs()
+
+	p.assert(RPAREN)
+	p.next()
+
+	block := p.blockStmt()
+
+	return FuncDef{Type: t, Name: name, Args: args, Block: block}
+}
+
+func (p *Parser) readFuncArgs() []FuncArg {
+	var res []FuncArg
+	for {
+		res = append(res, p.readFuncArg())
+		if !p.match(COMMA) {
+			break
+		}
+		p.next()
+	}
+	return res
+}
+
+func (p *Parser) readFuncArg() FuncArg {
+	var n FuncArg
+	n.Type = p.readType()
+
+	p.assert(IDENT)
+	n.Name = p.token
+	p.next()
+
+	return n
+}
+
+/**
+expression
+*/
 
 func (p *Parser) expr() Expr {
 	return p.assignExpr()
@@ -421,115 +548,9 @@ func (p *Parser) primaryExpr() Expr {
 	}
 }
 
-func (p *Parser) isType() bool {
-	return p.matchs([]TokenKind{INT, CHAR, VOID, FLOAT, LONG, SHORT, DOUBLE})
-}
-
-func (p *Parser) readType() Type {
-	var t Type
-	switch p.token.Kind {
-	case INT:
-		t = Int_t
-	case CHAR:
-		t = Char_t
-	case VOID:
-		t = Void_t
-	case FLOAT:
-		t = Float_t
-	case LONG:
-		t = Long_t
-	case SHORT:
-		t = Short_t
-	case DOUBLE:
-		t = Double_t
-	default:
-		panic("readType")
-	}
-	p.next()
-	return t
-}
-
-func (p *Parser) readVarDef() Node {
-	t := p.readType()
-
-	p.assert(IDENT)
-	name := string(p.token.Str)
-	p.next()
-
-	var n Node
-	if p.match(LBRACK) {
-		panic("read subscript")
-		// var s []Expr
-		// for p.match(LBRACK) {
-		// 	s = append(s, p.readSubscript())
-		// }
-		// arr := &ast.ArrayDef{Type: t, Name: name, Subscript: s}
-		//
-		// if p.match(ASSIGN) {
-		// 	p.next()
-		// 	arr.Init = p.readArrayInit()
-		// 	// obj.IsInit = true
-		// }
-		// n = arr
-	} else {
-		v := VarDef{Type: t, Name: name}
-
-		if p.match(ASSIGN) {
-			p.next()
-			e := p.assignExpr()
-			v.Init = &e
-		}
-		n = v
-	}
-
-	p.assert(SEMICOLON)
-	p.next()
-
-	return n
-}
-
-func (p *Parser) readFuncDef() FuncDef {
-	t := p.readType()
-
-	p.assert(IDENT)
-	name := string(p.token.Str)
-	p.next()
-
-	p.assert(LPAREN)
-	p.next()
-
-	args := p.readFuncArgs()
-
-	p.assert(RPAREN)
-	p.next()
-
-	block := p.blockStmt()
-
-	return FuncDef{Type: t, Name: name, Args: args, Block: block}
-}
-
-func (p *Parser) readFuncArgs() []FuncArg {
-	var res []FuncArg
-	for {
-		res = append(res, p.readFuncArg())
-		if !p.match(COMMA) {
-			break
-		}
-		p.next()
-	}
-	return res
-}
-
-func (p *Parser) readFuncArg() FuncArg {
-	var n FuncArg
-	n.Type = p.readType()
-
-	p.assert(IDENT)
-	n.Name = p.token
-	p.next()
-
-	return n
-}
+/**
+Statement
+*/
 
 func (p *Parser) blockStmt() BlockStmt {
 	p.assert(LBRACE)

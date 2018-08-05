@@ -217,3 +217,15 @@ func TestReadFuncDef(t *testing.T) {
 		t.Errorf("expected name is %s, but got %s", "a", v.Name)
 	}
 }
+
+func TestIsFuncDef(t *testing.T) {
+	p := NewParser([]byte("int main(int argc) { int a = 2 + 4; }"))
+	if !p.isFuncDef() {
+		t.Errorf("expected source is funcDef")
+	}
+
+	p = NewParser([]byte("int a = 2 + 4;"))
+	if p.isFuncDef() {
+		t.Errorf("expected source is not funcDef")
+	}
+}
