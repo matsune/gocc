@@ -29,25 +29,12 @@ func main() {
 	defer outFile.Close()
 
 	p := NewParser(source)
-
 	gen := NewGen()
-	gen.emitMain()
-	gen.prologue()
 
 	for !p.isEnd() {
 		n := p.parse()
-
-		switch v := n.(type) {
-		case Expr:
-			gen.expr(v)
-		case VarDef:
-			gen.varDef(v)
-		default:
-			panic("unimplemented")
-		}
+		gen.generate(n)
 	}
-
-	gen.epilogue()
 
 	if _, err := outFile.WriteString(gen.s); err != nil {
 		panic(err)

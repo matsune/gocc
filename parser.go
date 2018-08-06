@@ -129,8 +129,7 @@ func (p *Parser) parse() Node {
 	} else if p.isType() {
 		return p.readVarDef()
 	} else {
-		return p.expr()
-		// panic("unexpected")
+		panic("unexpected")
 	}
 }
 
@@ -243,7 +242,7 @@ func (p *Parser) readFuncDef() FuncDef {
 
 func (p *Parser) readFuncArgs() []FuncArg {
 	var res []FuncArg
-	for {
+	for p.isType() {
 		res = append(res, p.readFuncArg())
 		if !p.match(COMMA) {
 			break
@@ -549,13 +548,33 @@ func (p *Parser) primaryExpr() Expr {
 		p.next()
 		return e
 	default:
-		panic("primaryExpr")
+		panic("primaryExpr: " + p.token.String())
 	}
 }
 
 /**
 Statement
 */
+
+func (p *Parser) stmt() Node {
+	switch {
+	case p.isSelectionStmt():
+		return p.selectionStmt()
+	case p.isIterationStmt():
+		return p.iterationStmt()
+	case p.isJumpStmt():
+		return p.jumpStmt()
+	case p.match(LBRACE):
+		return p.blockStmt()
+	case p.isLabeledStmt():
+		return p.labeledStmt()
+	default:
+		e := p.expr()
+		p.assert(SEMICOLON)
+		p.next()
+		return e
+	}
+}
 
 func (p *Parser) blockStmt() BlockStmt {
 	p.assert(LBRACE)
@@ -567,13 +586,69 @@ func (p *Parser) blockStmt() BlockStmt {
 			d := p.readVarDef()
 			n.Nodes = append(n.Nodes, d)
 		} else {
-			// - TODO:
-			panic("stmt is not implemented")
-			// stmt := p.stmt()
-			// n.Nodes = append(n.Nodes, stmt)
+			stmt := p.stmt()
+			n.Nodes = append(n.Nodes, stmt)
 		}
 	}
 	p.next()
 
 	return n
+}
+
+func (p *Parser) isSelectionStmt() bool {
+	return p.match(IF) || p.match(SWITCH)
+}
+
+func (p *Parser) selectionStmt() Node {
+	panic("selectionStmt")
+}
+
+func (p *Parser) isIterationStmt() bool {
+	return p.match(WHILE) || p.match(DO) || p.match(FOR)
+}
+
+func (p *Parser) iterationStmt() Node {
+	panic("iterationStmt")
+}
+
+func (p *Parser) isJumpStmt() bool {
+	return p.match(GOTO) || p.match(CONTINUE) || p.match(BREAK) || p.match(RETURN)
+}
+
+func (p *Parser) jumpStmt() Node {
+	if p.match(GOTO) {
+		panic("unimplemented goto stmt")
+	} else if p.match(CONTINUE) {
+		panic("unimplemented continue stmt")
+	} else if p.match(BREAK) {
+		panic("unimplemented break stmt")
+	} else if p.match(RETURN) {
+		panic("unimplemented return stmt")
+		// p.next()
+		// n := ast.ReturnStmt{Token: p.token}
+		// if !p.match(SEMICOLON) {
+		// 	n.Expr = p.expr()
+		// }
+		// p.next()
+		// return n
+	} else {
+		panic("expected jump statement, but got '" + p.token.String() + "'.")
+	}
+}
+
+func (p *Parser) isLabeledStmt() bool {
+	if p.match(CASE) || p.match(DEFAULT) {
+		return true
+	}
+	if p.match(IDENT) {
+		p.push()
+		defer p.pop()
+		p.next()
+		return p.match(COLON)
+	}
+	return false
+}
+
+func (p *Parser) labeledStmt() Node {
+	panic("labeledStmt")
 }

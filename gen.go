@@ -62,18 +62,18 @@ func (r Reg) Str() string    { return r.String() }
 func (i IntVal) Str() string { return "$" + string(i.Token.Str) }
 
 func (gen *Gen) emit(c Code, ops ...Operand) {
-	gen.s += "\t" + c.String() + "\t"
+	gen.s += "\t" + c.String()
 	for i, v := range ops {
 		if i != 0 {
-			gen.s += ", "
+			gen.s += ","
 		}
-		gen.s += v.Str()
+		gen.s += "\t" + v.Str()
 	}
 	gen.s += "\n"
 }
 
-func (gen *Gen) emitMain() {
-	gen.s += ".global _main\n_main:\n"
+func (gen *Gen) global(n string) {
+	gen.s += ".global " + n + "\n"
 }
 
 func (gen *Gen) prologue() {
@@ -84,6 +84,36 @@ func (gen *Gen) prologue() {
 func (gen *Gen) epilogue() {
 	gen.emit(LEAVE)
 	gen.emit(RET)
+}
+
+func (gen *Gen) emitFuncDef(n string) {
+	gen.s += n + ":\n"
+}
+
+func (gen *Gen) generate(n Node) {
+	switch v := n.(type) {
+	case FuncDef:
+		if v.Name == "main" {
+			gen.global("_main")
+			gen.emitFuncDef("_main")
+		} else {
+			gen.emitFuncDef(v.Name)
+		}
+		gen.prologue()
+
+		for _, node := range v.Block.Nodes {
+			gen.generate(node)
+		}
+
+		gen.epilogue()
+
+	case Expr:
+		gen.expr(v)
+	case VarDef:
+		gen.varDef(v)
+	default:
+		panic("unimplemented")
+	}
 }
 
 func (gen *Gen) expr(e Expr) {
@@ -167,7 +197,7 @@ func (c Code) String() string {
 	case RET:
 		return "ret"
 	default:
-		return ""
+		panic("undefined code")
 	}
 }
 
@@ -186,6 +216,6 @@ func (r Reg) String() string {
 	case ESP:
 		return "%esp"
 	default:
-		return ""
+		panic("undefined reg")
 	}
 }
