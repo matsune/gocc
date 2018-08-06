@@ -2,6 +2,7 @@ package main
 
 import "fmt"
 
+// [key: var name, value: offset from ebp]
 type Map map[string]int
 
 type Gen struct {
@@ -37,7 +38,6 @@ const (
 	EBX
 	ECX
 	EDX
-
 	EBP
 	ESP
 )
@@ -46,6 +46,11 @@ type Operand interface {
 	Str() string
 }
 
+func (r Reg) Str() string    { return r.String() }
+func (i IntVal) Str() string { return "$" + string(i.Token.Str) }
+func (i Ident) Str() string  { return i.Token.String() }
+
+// register offset of variable
 func (gen *Gen) add(n string, p int) {
 	gen.m[n] = p
 }
@@ -59,10 +64,6 @@ func (gen *Gen) lookup(n string) (int, bool) {
 	return 0, false
 }
 
-func (r Reg) Str() string    { return r.String() }
-func (i IntVal) Str() string { return "$" + string(i.Token.Str) }
-func (i Ident) Str() string  { return i.Token.String() }
-
 func (gen *Gen) emit(c Code, ops ...Operand) {
 	gen.s += "\t" + c.String()
 	for i, v := range ops {
@@ -72,6 +73,10 @@ func (gen *Gen) emit(c Code, ops ...Operand) {
 		gen.s += "\t" + v.Str()
 	}
 	gen.s += "\n"
+}
+
+func (gen *Gen) emitf(format string, a ...interface{}) {
+	gen.s += fmt.Sprintf(format, a...)
 }
 
 func (gen *Gen) global(n string) {
@@ -113,8 +118,8 @@ func (gen *Gen) varDef(n VarDef) {
 	}
 	gen.pos += n.Type.Size()
 	gen.add(n.Name, gen.pos)
-	gen.s += fmt.Sprintf("\tsubl\t$%d, %%esp\n", n.Type.Size())
-	gen.s += fmt.Sprintf("\tmovl\t%%eax, %d(%%ebp)\n", -gen.pos)
+	gen.emitf("\tsubl\t$%d, %%esp\n", n.Type.Size())
+	gen.emitf("\tmovl\t%%eax, %d(%%ebp)\n", -gen.pos)
 }
 
 func (gen *Gen) funcDef(v FuncDef) {
@@ -137,7 +142,7 @@ func (gen *Gen) expr(e Expr) {
 		gen.binary(v)
 	case Ident:
 		if pos, ok := gen.lookup(v.Token.String()); ok {
-			gen.s += fmt.Sprintf("\tmovl\t%d(%%ebp), %%eax\n", -pos)
+			gen.emitf("\tmovl\t%d(%%ebp), %%eax\n", -pos)
 		} else {
 			panic("ident is not defined")
 		}
