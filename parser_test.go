@@ -253,3 +253,14 @@ func TestFuncCall(t *testing.T) {
 		}
 	}
 }
+
+func TestFuncCall2(t *testing.T) {
+	p := NewParser([]byte("int main() { return a(); }"))
+	f, ok := p.parse().(FuncDef)
+	if !ok {
+		t.Errorf("expected type is FuncDef, but got %s", reflect.TypeOf(p.parse()))
+	}
+	if len(f.Block.Nodes) != 1 {
+		t.Errorf("expected nodes count is %d, but got %d", 1, len(f.Block.Nodes))
+	}
+}

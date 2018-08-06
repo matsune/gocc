@@ -495,7 +495,7 @@ func (p *Parser) unaryExpr() Expr {
 		op := p.token
 		p.next()
 
-		return UnaryExpr{Op: op, E: p.castExpr()}
+		return UnaryExpr{Op: op, Expr: p.castExpr()}
 	} else {
 		return p.postfixExpr()
 	}
@@ -548,6 +548,7 @@ func (p *Parser) primaryExpr() Expr {
 		p.next()
 		return e
 	default:
+		fmt.Println(p.token)
 		panic("primaryExpr: " + p.token.String())
 	}
 }
@@ -566,8 +567,6 @@ func (p *Parser) readFuncCall(e Expr) FuncCall {
 	}
 	p.next()
 
-	p.assert(SEMICOLON)
-	p.next()
 	return n
 }
 
@@ -591,7 +590,7 @@ func (p *Parser) stmt() Stmt {
 		e := p.expr()
 		p.assert(SEMICOLON)
 		p.next()
-		return ExprStmt{E: e}
+		return ExprStmt{Expr: e}
 	}
 }
 
@@ -643,10 +642,10 @@ func (p *Parser) jumpStmt() Stmt {
 		panic("unimplemented break stmt")
 	} else if p.match(RETURN) {
 		p.next()
-		n := ReturnStmt{Token: p.token}
-		if !p.match(SEMICOLON) {
-			n.E = p.expr()
-		}
+
+		n := ReturnStmt{Expr: p.expr()}
+
+		p.assert(SEMICOLON)
 		p.next()
 		return n
 	} else {

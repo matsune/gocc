@@ -13,10 +13,7 @@ const (
 	COND_EXPR
 	UNARY_EXPR
 	ASSIGN_EXPR
-
 	FUNC_CALL
-
-	// value
 	INT_VAL
 
 	// stmt
@@ -100,7 +97,7 @@ type (
 type (
 	Expr interface {
 		Node
-		Expr()
+		expr()
 	}
 
 	BinaryExpr struct {
@@ -116,8 +113,8 @@ type (
 	}
 
 	UnaryExpr struct {
-		Op *Token
-		E  Expr
+		Op   *Token
+		Expr Expr
 	}
 
 	AssignExpr struct {
@@ -139,7 +136,7 @@ type (
 type (
 	Stmt interface {
 		Node
-		Stmt()
+		stmt()
 	}
 
 	BlockStmt struct {
@@ -147,12 +144,11 @@ type (
 	}
 
 	ReturnStmt struct {
-		Token *Token
-		E     Expr
+		Expr Expr
 	}
 
 	ExprStmt struct {
-		E Expr
+		Expr Expr
 	}
 )
 
@@ -174,14 +170,14 @@ func (BlockStmt) Kind() Kind  { return BLOCK_STMT }
 func (ReturnStmt) Kind() Kind { return RETURN_STMT }
 func (ExprStmt) Kind() Kind   { return EXPR_STMT }
 
-func (Ident) Expr()      {}
-func (BinaryExpr) Expr() {}
-func (CondExpr) Expr()   {}
-func (UnaryExpr) Expr()  {}
-func (AssignExpr) Expr() {}
-func (FuncCall) Expr()   {}
-func (IntVal) Expr()     {}
+func (Ident) expr()      {}
+func (BinaryExpr) expr() {}
+func (CondExpr) expr()   {}
+func (UnaryExpr) expr()  {}
+func (AssignExpr) expr() {}
+func (FuncCall) expr()   {}
+func (IntVal) expr()     {}
 
-func (BlockStmt) Stmt()  {}
-func (ReturnStmt) Stmt() {}
-func (ExprStmt) Stmt()   {}
+func (BlockStmt) stmt()  {}
+func (ReturnStmt) stmt() {}
+func (ExprStmt) stmt()   {}

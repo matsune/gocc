@@ -25,6 +25,7 @@ const (
 	CLTD
 	PUSHL
 	POPL
+	CALL
 	LEAVE
 	RET
 )
@@ -60,6 +61,7 @@ func (gen *Gen) lookup(n string) (int, bool) {
 
 func (r Reg) Str() string    { return r.String() }
 func (i IntVal) Str() string { return "$" + string(i.Token.Str) }
+func (i Ident) Str() string  { return i.Token.String() }
 
 func (gen *Gen) emit(c Code, ops ...Operand) {
 	gen.s += "\t" + c.String()
@@ -92,27 +94,41 @@ func (gen *Gen) emitFuncDef(n string) {
 
 func (gen *Gen) generate(n Node) {
 	switch v := n.(type) {
-	case FuncDef:
-		if v.Name == "main" {
-			gen.global("_main")
-			gen.emitFuncDef("_main")
-		} else {
-			gen.emitFuncDef(v.Name)
-		}
-		gen.prologue()
-		for _, node := range v.Block.Nodes {
-			gen.generate(node)
-		}
-		gen.epilogue()
-	case ExprStmt:
-		gen.expr(v.E)
-	case ReturnStmt:
-		gen.expr(v.E)
 	case VarDef:
 		gen.varDef(v)
+	case FuncDef:
+		gen.funcDef(v)
+	case Expr:
+		gen.expr(v)
+	case Stmt:
+		gen.stmt(v)
 	default:
 		panic("unimplemented")
 	}
+}
+
+func (gen *Gen) varDef(n VarDef) {
+	if n.Init != nil {
+		gen.expr(*n.Init)
+	}
+	gen.pos += n.Type.Size()
+	gen.add(n.Name, gen.pos)
+	gen.s += fmt.Sprintf("\tsubl\t$%d, %%esp\n", n.Type.Size())
+	gen.s += fmt.Sprintf("\tmovl\t%%eax, %d(%%ebp)\n", -gen.pos)
+}
+
+func (gen *Gen) funcDef(v FuncDef) {
+	if v.Name == "main" {
+		gen.global("_main")
+		gen.emitFuncDef("_main")
+	} else {
+		gen.emitFuncDef(v.Name)
+	}
+	gen.prologue()
+	for _, node := range v.Block.Nodes {
+		gen.generate(node)
+	}
+	gen.epilogue()
 }
 
 func (gen *Gen) expr(e Expr) {
@@ -127,6 +143,17 @@ func (gen *Gen) expr(e Expr) {
 		}
 	case IntVal:
 		gen.emit(MOVL, v, EAX)
+	case FuncCall:
+		gen.funcCall(v)
+	}
+}
+
+func (gen *Gen) stmt(e Stmt) {
+	switch v := e.(type) {
+	case ExprStmt:
+		gen.expr(v.Expr)
+	case ReturnStmt:
+		gen.expr(v.Expr)
 	}
 }
 
@@ -163,14 +190,8 @@ func (gen *Gen) binary(e BinaryExpr) {
 	}
 }
 
-func (gen *Gen) varDef(n VarDef) {
-	if n.Init != nil {
-		gen.expr(*n.Init)
-	}
-	gen.pos += n.Type.Size()
-	gen.add(n.Name, gen.pos)
-	gen.s += fmt.Sprintf("\tsubl\t$%d, %%esp\n", n.Type.Size())
-	gen.s += fmt.Sprintf("\tmovl\t%%eax, %d(%%ebp)\n", -gen.pos)
+func (gen *Gen) funcCall(e FuncCall) {
+	gen.emit(CALL, e.Ident)
 }
 
 func (c Code) String() string {
@@ -191,6 +212,8 @@ func (c Code) String() string {
 		return "pushl"
 	case POPL:
 		return "popl"
+	case CALL:
+		return "call"
 	case LEAVE:
 		return "leave"
 	case RET:
