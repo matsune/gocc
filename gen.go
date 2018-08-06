@@ -20,13 +20,13 @@ type Code int
 const (
 	ADDL Code = iota
 	SUBL
-	MOVL
-	IMULL
-	IDIVL
+	MOV
+	IMUL
+	IDIV
 	CLTD
 	XORL
-	PUSHL
-	POPL
+	PUSH
+	POP
 	CALL
 	LEAVE
 	RET
@@ -43,9 +43,14 @@ const (
 	ESP
 	EDI
 	ESI
+	R8D
+	R9D
+	RAX
+	RBP
+	RSP
 )
 
-var argRegs = []Reg{EDI, ESI, EDX, ECX}
+var argRegs = []Reg{EDI, ESI, EDX, ECX, R8D, R9D}
 
 type Operand interface {
 	Str() string
@@ -89,8 +94,8 @@ func (gen *Gen) global(n string) {
 }
 
 func (gen *Gen) prologue() {
-	gen.emit(PUSHL, EBP)
-	gen.emit(MOVL, ESP, EBP)
+	gen.emit(PUSH, RBP)
+	gen.emit(MOV, RSP, RBP)
 }
 
 func (gen *Gen) epilogue() {
@@ -123,17 +128,20 @@ func (gen *Gen) varDef(n VarDef) {
 	}
 	gen.pos += n.Type.Size()
 	gen.add(n.Name, gen.pos)
-	gen.emitf("\tsubl\t$%d, %%esp\n", n.Type.Size())
-	gen.emitf("\tmovl\t%%eax, %d(%%ebp)\n", -gen.pos)
+	gen.emitf("\tsub \t$%d, %%rsp\n", n.Type.Size())
+	gen.emitf("\tmov \t%%eax, %d(%%rbp)\n", -gen.pos)
 }
 
 func (gen *Gen) argDef(a FuncArg) {
 	gen.pos += a.Type.Size()
 	gen.add(a.Name.String(), gen.pos)
-	gen.emitf("\tsubl\t$%d, %%esp\n", a.Type.Size())
+	gen.emitf("\tsub \t$%d, %%rsp\n", a.Type.Size())
 }
 
 func (gen *Gen) funcDef(v FuncDef) {
+	gen.pos = 0
+	gen.m = Map{}
+
 	if v.Name == "main" {
 		gen.global("_main")
 		gen.emitFuncDef("_main")
@@ -146,10 +154,10 @@ func (gen *Gen) funcDef(v FuncDef) {
 		gen.argDef(arg)
 		if pos, ok := gen.lookup(arg.Name.String()); ok {
 			if i < len(argRegs) {
-				gen.emitf("\tmovl\t%s, %d(%%ebp)\n", argRegs[i], -pos)
+				gen.emitf("\tmov \t%s, %d(%%rbp)\n", argRegs[i], -pos)
 			} else {
-				gen.emitf("\tmovl\t%d(%%ebp), %%eax\n", (i-len(argRegs)+1)*4+4)
-				gen.emitf("\tmovl\t%%eax, %d(%%ebp)\n", -pos)
+				gen.emitf("\tmov \t%d(%%rbp), %%eax\n", (i-len(argRegs)+1)*8+8)
+				gen.emitf("\tmov \t%%eax, %d(%%rbp)\n", -pos)
 			}
 		} else {
 			panic("ident is not defined")
@@ -177,12 +185,12 @@ func (gen *Gen) expr(e Expr) {
 		gen.binary(v)
 	case Ident:
 		if pos, ok := gen.lookup(v.Token.String()); ok {
-			gen.emitf("\tmovl\t%d(%%ebp), %%eax\n", -pos)
+			gen.emitf("\tmov \t%d(%%rbp), %%eax\n", -pos)
 		} else {
 			panic("ident is not defined")
 		}
 	case IntVal:
-		gen.emit(MOVL, v, EAX)
+		gen.emit(MOV, v, EAX)
 	case FuncCall:
 		gen.funcCall(v)
 	}
@@ -199,12 +207,12 @@ func (gen *Gen) stmt(e Stmt) {
 
 func (gen *Gen) binary(e BinaryExpr) {
 	gen.expr(e.X)
-	gen.emit(PUSHL, EAX)
+	gen.emit(PUSH, RAX)
 
 	gen.expr(e.Y)
-	gen.emit(MOVL, EAX, EBX)
+	gen.emit(MOV, EAX, EBX)
 
-	gen.emit(POPL, EAX)
+	gen.emit(POP, RAX)
 
 	var c Code
 	if e.Op.Kind == ADD {
@@ -212,18 +220,18 @@ func (gen *Gen) binary(e BinaryExpr) {
 	} else if e.Op.Kind == SUB {
 		c = SUBL
 	} else if e.Op.Kind == MUL {
-		c = IMULL
+		c = IMUL
 	} else if e.Op.Kind == DIV || e.Op.Kind == REM {
-		c = IDIVL
+		c = IDIV
 	} else {
 		panic("unimplemented")
 	}
 
-	if c == IDIVL {
+	if c == IDIV {
 		gen.emit(CLTD)
-		gen.emit(IDIVL, EBX)
+		gen.emit(IDIV, EBX)
 		if e.Op.Kind == REM {
-			gen.emit(MOVL, EDX, EAX)
+			gen.emit(MOV, EDX, EAX)
 		}
 	} else {
 		gen.emit(c, EBX, EAX)
@@ -234,9 +242,9 @@ func (gen *Gen) funcCall(e FuncCall) {
 	for i := len(e.Args) - 1; i >= 0; i-- {
 		gen.expr(e.Args[i])
 		if i > len(argRegs)-1 {
-			gen.emit(PUSHL, EAX)
+			gen.emit(PUSH, RAX)
 		} else {
-			gen.emit(MOVL, EAX, argRegs[i])
+			gen.emit(MOV, EAX, argRegs[i])
 		}
 	}
 	gen.emit(CALL, e.Ident)
@@ -245,23 +253,23 @@ func (gen *Gen) funcCall(e FuncCall) {
 func (c Code) String() string {
 	switch c {
 	case ADDL:
-		return "addl"
+		return "add "
 	case SUBL:
-		return "subl"
-	case MOVL:
-		return "movl"
-	case IMULL:
-		return "imull"
-	case IDIVL:
-		return "idivl"
+		return "sub "
+	case MOV:
+		return "mov "
+	case IMUL:
+		return "imul"
+	case IDIV:
+		return "idiv"
 	case CLTD:
 		return "cltd"
 	case XORL:
 		return "xorl"
-	case PUSHL:
-		return "pushl"
-	case POPL:
-		return "popl"
+	case PUSH:
+		return "push"
+	case POP:
+		return "pop "
 	case CALL:
 		return "call"
 	case LEAVE:
@@ -291,6 +299,16 @@ func (r Reg) String() string {
 		return "%edi"
 	case ESI:
 		return "%esi"
+	case R8D:
+		return "%r8d"
+	case R9D:
+		return "%r9d"
+	case RAX:
+		return "%rax"
+	case RBP:
+		return "%rbp"
+	case RSP:
+		return "%rsp"
 	default:
 		panic("undefined reg")
 	}

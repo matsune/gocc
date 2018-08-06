@@ -42,7 +42,7 @@ test() {
   fi
   ASM_FILE="${ASM}/${1}.s"
   ./gocc -o $ASM_FILE $FILE || return
-  gcc -m32 $ASM_FILE -o $OUT
+  gcc $ASM_FILE -o $OUT
   ./$OUT
   res=$?
   cat $FILE
@@ -71,7 +71,7 @@ test 10 43
 test 11 11
 test 12 3
 test 13 15
-test 14 180
+test 14 110
 
 echo "Finished test."
 echo "${GREEN}PASSED: ${PASSED}\t${RED}FAILED: ${FAILED}${CLEAR}"
