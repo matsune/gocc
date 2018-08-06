@@ -55,7 +55,7 @@ expect "int main() { int a = 3; int b = 4 + a; }" 7
 expect "int main() { int a = 5; int b = a + 8; int c = a + b + 12; }" 30
 expect "int main() { int a = 1 + 2; int b = 3 + a + 5; int c = 10 + a * b; }" 43
 
-expect "int a() {} int main() { int a = 1 + 2; int b = 3 + a + 5; int c = 10 + a * b; }" 43
+expect "int main() { return 1 + 2; }" 3
 
 rm $TESTFILE
 rm $OUT

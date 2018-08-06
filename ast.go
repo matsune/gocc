@@ -8,14 +8,19 @@ const (
 	FUNC_ARG
 	AST_IDENT
 
+	// expr
 	BINARY_EXPR
 	COND_EXPR
 	UNARY_EXPR
 	ASSIGN_EXPR
 
+	// value
 	INT_VAL
 
+	// stmt
 	BLOCK_STMT
+	RETURN_STMT
+	EXPR_STMT
 )
 
 type Type int
@@ -125,8 +130,22 @@ type (
 )
 
 type (
+	Stmt interface {
+		Node
+		Stmt()
+	}
+
 	BlockStmt struct {
 		Nodes []Node
+	}
+
+	ReturnStmt struct {
+		Token *Token
+		E     Expr
+	}
+
+	ExprStmt struct {
+		E Expr
 	}
 )
 
@@ -140,13 +159,19 @@ func (CondExpr) Kind() Kind   { return COND_EXPR }
 func (UnaryExpr) Kind() Kind  { return UNARY_EXPR }
 func (AssignExpr) Kind() Kind { return ASSIGN_EXPR }
 
-func (BlockStmt) Kind() Kind { return BLOCK_STMT }
+func (IntVal) Kind() Kind { return INT_VAL }
+
+func (BlockStmt) Kind() Kind  { return BLOCK_STMT }
+func (ReturnStmt) Kind() Kind { return RETURN_STMT }
+func (ExprStmt) Kind() Kind   { return EXPR_STMT }
 
 func (Ident) Expr()      {}
 func (BinaryExpr) Expr() {}
 func (CondExpr) Expr()   {}
 func (UnaryExpr) Expr()  {}
 func (AssignExpr) Expr() {}
+func (IntVal) Expr()     {}
 
-func (IntVal) Kind() Kind { return INT_VAL }
-func (IntVal) Expr()      {}
+func (BlockStmt) Stmt()  {}
+func (ReturnStmt) Stmt() {}
+func (ExprStmt) Stmt()   {}

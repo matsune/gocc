@@ -556,7 +556,7 @@ func (p *Parser) primaryExpr() Expr {
 Statement
 */
 
-func (p *Parser) stmt() Node {
+func (p *Parser) stmt() Stmt {
 	switch {
 	case p.isSelectionStmt():
 		return p.selectionStmt()
@@ -572,7 +572,7 @@ func (p *Parser) stmt() Node {
 		e := p.expr()
 		p.assert(SEMICOLON)
 		p.next()
-		return e
+		return ExprStmt{E: e}
 	}
 }
 
@@ -599,7 +599,7 @@ func (p *Parser) isSelectionStmt() bool {
 	return p.match(IF) || p.match(SWITCH)
 }
 
-func (p *Parser) selectionStmt() Node {
+func (p *Parser) selectionStmt() Stmt {
 	panic("selectionStmt")
 }
 
@@ -607,7 +607,7 @@ func (p *Parser) isIterationStmt() bool {
 	return p.match(WHILE) || p.match(DO) || p.match(FOR)
 }
 
-func (p *Parser) iterationStmt() Node {
+func (p *Parser) iterationStmt() Stmt {
 	panic("iterationStmt")
 }
 
@@ -615,7 +615,7 @@ func (p *Parser) isJumpStmt() bool {
 	return p.match(GOTO) || p.match(CONTINUE) || p.match(BREAK) || p.match(RETURN)
 }
 
-func (p *Parser) jumpStmt() Node {
+func (p *Parser) jumpStmt() Stmt {
 	if p.match(GOTO) {
 		panic("unimplemented goto stmt")
 	} else if p.match(CONTINUE) {
@@ -623,14 +623,13 @@ func (p *Parser) jumpStmt() Node {
 	} else if p.match(BREAK) {
 		panic("unimplemented break stmt")
 	} else if p.match(RETURN) {
-		panic("unimplemented return stmt")
-		// p.next()
-		// n := ast.ReturnStmt{Token: p.token}
-		// if !p.match(SEMICOLON) {
-		// 	n.Expr = p.expr()
-		// }
-		// p.next()
-		// return n
+		p.next()
+		n := ReturnStmt{Token: p.token}
+		if !p.match(SEMICOLON) {
+			n.E = p.expr()
+		}
+		p.next()
+		return n
 	} else {
 		panic("expected jump statement, but got '" + p.token.String() + "'.")
 	}
@@ -649,6 +648,6 @@ func (p *Parser) isLabeledStmt() bool {
 	return false
 }
 
-func (p *Parser) labeledStmt() Node {
+func (p *Parser) labeledStmt() Stmt {
 	panic("labeledStmt")
 }

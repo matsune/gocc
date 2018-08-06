@@ -100,15 +100,14 @@ func (gen *Gen) generate(n Node) {
 			gen.emitFuncDef(v.Name)
 		}
 		gen.prologue()
-
 		for _, node := range v.Block.Nodes {
 			gen.generate(node)
 		}
-
 		gen.epilogue()
-
-	case Expr:
-		gen.expr(v)
+	case ExprStmt:
+		gen.expr(v.E)
+	case ReturnStmt:
+		gen.expr(v.E)
 	case VarDef:
 		gen.varDef(v)
 	default:
