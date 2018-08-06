@@ -229,3 +229,27 @@ func TestIsFuncDef(t *testing.T) {
 		t.Errorf("expected source is not funcDef")
 	}
 }
+
+func TestFuncCall(t *testing.T) {
+	p := NewParser([]byte("func(a, b, c);"))
+	f, ok := p.expr().(FuncCall)
+	if !ok {
+		t.Errorf("expected type is FuncCall, but got %s", reflect.TypeOf(p.expr()))
+	}
+	if f.Ident.Token.String() != "func" {
+		t.Errorf("expected func name is %s, but got %s", "func", f.Ident.Token)
+	}
+	if len(f.Args) != 3 {
+		t.Errorf("expected args count is %d, but got %d", 3, len(f.Args))
+	}
+	idents := []string{"a", "b", "c"}
+	for i, v := range f.Args {
+		a, ok := v.(Ident)
+		if !ok {
+			t.Errorf("expected arg[%d] is not ident", i)
+		}
+		if a.Token.String() != idents[i] {
+			t.Errorf("expected arg[%d] is %s, but got %s", i, idents[i], a.Token.String())
+		}
+	}
+}

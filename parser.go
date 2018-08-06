@@ -517,8 +517,8 @@ func (p *Parser) postfixExpr2(e Expr) Expr {
 		panic("postfix decrement")
 	} else if p.match(LPAREN) {
 		switch e.(type) {
-		// case Ident:
-		// 	return p.readFuncCall(e)
+		case Ident:
+			return p.readFuncCall(e)
 		default:
 			panic("unimplemented postfixExpr2")
 		}
@@ -550,6 +550,25 @@ func (p *Parser) primaryExpr() Expr {
 	default:
 		panic("primaryExpr: " + p.token.String())
 	}
+}
+
+func (p *Parser) readFuncCall(e Expr) FuncCall {
+	p.assert(LPAREN)
+	p.next()
+
+	n := FuncCall{Ident: e.(Ident)}
+	for !p.match(RPAREN) {
+		expr := p.expr()
+		n.Args = append(n.Args, expr)
+		if p.match(COMMA) {
+			p.next()
+		}
+	}
+	p.next()
+
+	p.assert(SEMICOLON)
+	p.next()
+	return n
 }
 
 /**

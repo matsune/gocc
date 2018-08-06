@@ -14,6 +14,8 @@ const (
 	UNARY_EXPR
 	ASSIGN_EXPR
 
+	FUNC_CALL
+
 	// value
 	INT_VAL
 
@@ -127,6 +129,11 @@ type (
 	IntVal struct {
 		Token *Token
 	}
+
+	FuncCall struct {
+		Ident Ident
+		Args  []Expr
+	}
 )
 
 type (
@@ -159,6 +166,8 @@ func (CondExpr) Kind() Kind   { return COND_EXPR }
 func (UnaryExpr) Kind() Kind  { return UNARY_EXPR }
 func (AssignExpr) Kind() Kind { return ASSIGN_EXPR }
 
+func (FuncCall) Kind() Kind { return FUNC_CALL }
+
 func (IntVal) Kind() Kind { return INT_VAL }
 
 func (BlockStmt) Kind() Kind  { return BLOCK_STMT }
@@ -170,6 +179,7 @@ func (BinaryExpr) Expr() {}
 func (CondExpr) Expr()   {}
 func (UnaryExpr) Expr()  {}
 func (AssignExpr) Expr() {}
+func (FuncCall) Expr()   {}
 func (IntVal) Expr()     {}
 
 func (BlockStmt) Stmt()  {}
