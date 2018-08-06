@@ -29,7 +29,7 @@ expect() {
   ./$OUT
   res=$?
   if [ $res -eq $2 ]; then
-    echo "${GREEN}=> ${res} [OK]${CLEAR}"
+    echo "=> ${res} ${GREEN}[OK]${CLEAR}"
   else
     echo ${RED}
     echo "[Failed]'${1}' expected ${2}, but got ${res}"
@@ -64,6 +64,8 @@ expect "int a() { return 3; } int main() { return a(); }" 3
 expect "int a() { return 3 + 4 * 2; } int main() { return a(); }" 11
 
 expect "int sum(int a, int b) { return a + b; } int main() { return sum(1, 2); }" 3
+expect "int add10(int a) { return a + 10; } int main() { int a = 5; return add10(a); }" 15
+expect "int sum(int a, int b, int c, int d, int e, int f, int g, int h) { return a+b+c+d+e+f+g+h; } int main() { int s = sum(1,2,3,4,5,6,7,8); return s * 5; }" 180
 
 rm $TESTFILE
 rm $OUT

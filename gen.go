@@ -43,11 +43,9 @@ const (
 	ESP
 	EDI
 	ESI
-	R8D
-	R9D
 )
 
-var argRegs = []Reg{EDI, ESI, EDX, ECX, R8D, R9D}
+var argRegs = []Reg{EDI, ESI, EDX, ECX}
 
 type Operand interface {
 	Str() string
@@ -133,7 +131,6 @@ func (gen *Gen) argDef(a FuncArg) {
 	gen.pos += a.Type.Size()
 	gen.add(a.Name.String(), gen.pos)
 	gen.emitf("\tsubl\t$%d, %%esp\n", a.Type.Size())
-	gen.emitf("\tmovl\t%%eax, %d(%%ebp)\n", -gen.pos)
 }
 
 func (gen *Gen) funcDef(v FuncDef) {
@@ -146,16 +143,18 @@ func (gen *Gen) funcDef(v FuncDef) {
 	gen.prologue()
 
 	for i, arg := range v.Args {
-		if i < len(argRegs) {
-			gen.argDef(arg)
-			if pos, ok := gen.lookup(arg.Name.String()); ok {
+		gen.argDef(arg)
+		if pos, ok := gen.lookup(arg.Name.String()); ok {
+			if i < len(argRegs) {
 				gen.emitf("\tmovl\t%s, %d(%%ebp)\n", argRegs[i], -pos)
 			} else {
-				panic("ident is not defined")
+				gen.emitf("\tmovl\t%d(%%ebp), %%eax\n", (i-len(argRegs)+1)*4+4)
+				gen.emitf("\tmovl\t%%eax, %d(%%ebp)\n", -pos)
 			}
 		} else {
-			panic("unimplemented args")
+			panic("ident is not defined")
 		}
+
 	}
 
 	count := -1
@@ -292,10 +291,6 @@ func (r Reg) String() string {
 		return "%edi"
 	case ESI:
 		return "%esi"
-	case R8D:
-		return "%r8d"
-	case R9D:
-		return "%r9d"
 	default:
 		panic("undefined reg")
 	}
