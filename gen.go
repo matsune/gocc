@@ -24,6 +24,7 @@ const (
 	IMULL
 	IDIVL
 	CLTD
+	XORL
 	PUSHL
 	POPL
 	CALL
@@ -130,9 +131,18 @@ func (gen *Gen) funcDef(v FuncDef) {
 		gen.emitFuncDef(v.Name)
 	}
 	gen.prologue()
-	for _, node := range v.Block.Nodes {
+
+	count := -1
+	for i, node := range v.Block.Nodes {
 		gen.generate(node)
+		count = i
 	}
+
+	if count == -1 ||
+		(count > -1 && v.Block.Nodes[count].Kind() != RETURN_STMT) {
+		gen.emit(XORL, EAX, EAX)
+	}
+
 	gen.epilogue()
 }
 
@@ -213,6 +223,8 @@ func (c Code) String() string {
 		return "idivl"
 	case CLTD:
 		return "cltd"
+	case XORL:
+		return "xorl"
 	case PUSHL:
 		return "pushl"
 	case POPL:

@@ -37,25 +37,26 @@ expect() {
   fi
 }
 
-expect "int main() { 1; }" 1
-expect "int main() { 2; }" 2
+expect "int main() { 1; }" 0
+expect "int main() { return 1; }" 1
+expect "int main() { return 2; }" 2
 
-expect "int main() { 1+2+3+4; }" 10
-expect "int main() { 5-8+10-2; }" 5
+expect "int main() { return 1+2+3+4; }" 10
+expect "int main() { return 5-8+10-2; }" 5
 
-expect "int main() { 3*4; }" 12
-expect "int main() { 5/3; }" 1
-expect "int main() { 4%3; }" 1
-expect "int main() { (3 * 4) % 2; }" 0
+expect "int main() { return 3*4; }" 12
+expect "int main() { return 5/3; }" 1
+expect "int main() { return 4%3; }" 1
+expect "int main() { return (3 * 4) % 2; }" 0
 
-expect "int main() { (4 * 5 / 2 + 4) * 3 - 1; }" 41
+expect "int main() { return (4 * 5 / 2 + 4) * 3 - 1; }" 41
 
-expect "int main() { int a = 4; }" 4
-expect "int main() { int a = 2 * (5 + 10 / 2); }" 20
-expect "int main() { int a = 3; int b = a + 4; }" 7
-expect "int main() { int a = 3; int b = 4 + a; }" 7
-expect "int main() { int a = 5; int b = a + 8; int c = a + b + 12; }" 30
-expect "int main() { int a = 1 + 2; int b = 3 + a + 5; int c = 10 + a * b; }" 43
+expect "int main() { int a = 4; return a; }" 4
+expect "int main() { int a = 2 * (5 + 10 / 2); return a; }" 20
+expect "int main() { int a = 3; int b = a + 4; return b; }" 7
+expect "int main() { int a = 3; int b = 4 + a; return b; }" 7
+expect "int main() { int a = 5; int b = a + 8; int c = a + b + 12; return c; }" 30
+expect "int main() { int a = 1 + 2; int b = 3 + a + 5; int c = 10 + a * b; return c; }" 43
 
 expect "int main() { return 1 + 2; }" 3
 

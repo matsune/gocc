@@ -152,20 +152,16 @@ type (
 	}
 )
 
-func (VarDef) Kind() Kind  { return VAR_DEF }
-func (FuncDef) Kind() Kind { return FUNC_DEF }
-func (FuncArg) Kind() Kind { return FUNC_ARG }
-func (Ident) Kind() Kind   { return AST_IDENT }
-
+func (VarDef) Kind() Kind     { return VAR_DEF }
+func (FuncDef) Kind() Kind    { return FUNC_DEF }
+func (FuncArg) Kind() Kind    { return FUNC_ARG }
+func (Ident) Kind() Kind      { return AST_IDENT }
 func (BinaryExpr) Kind() Kind { return BINARY_EXPR }
 func (CondExpr) Kind() Kind   { return COND_EXPR }
 func (UnaryExpr) Kind() Kind  { return UNARY_EXPR }
 func (AssignExpr) Kind() Kind { return ASSIGN_EXPR }
-
-func (FuncCall) Kind() Kind { return FUNC_CALL }
-
-func (IntVal) Kind() Kind { return INT_VAL }
-
+func (FuncCall) Kind() Kind   { return FUNC_CALL }
+func (IntVal) Kind() Kind     { return INT_VAL }
 func (BlockStmt) Kind() Kind  { return BLOCK_STMT }
 func (ReturnStmt) Kind() Kind { return RETURN_STMT }
 func (ExprStmt) Kind() Kind   { return EXPR_STMT }
