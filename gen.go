@@ -41,7 +41,13 @@ const (
 	EDX
 	EBP
 	ESP
+	EDI
+	ESI
+	R8D
+	R9D
 )
+
+var argRegs = []Reg{EDI, ESI, EDX, ECX, R8D, R9D}
 
 type Operand interface {
 	Str() string
@@ -123,6 +129,13 @@ func (gen *Gen) varDef(n VarDef) {
 	gen.emitf("\tmovl\t%%eax, %d(%%ebp)\n", -gen.pos)
 }
 
+func (gen *Gen) argDef(a FuncArg) {
+	gen.pos += a.Type.Size()
+	gen.add(a.Name.String(), gen.pos)
+	gen.emitf("\tsubl\t$%d, %%esp\n", a.Type.Size())
+	gen.emitf("\tmovl\t%%eax, %d(%%ebp)\n", -gen.pos)
+}
+
 func (gen *Gen) funcDef(v FuncDef) {
 	if v.Name == "main" {
 		gen.global("_main")
@@ -131,6 +144,19 @@ func (gen *Gen) funcDef(v FuncDef) {
 		gen.emitFuncDef(v.Name)
 	}
 	gen.prologue()
+
+	for i, arg := range v.Args {
+		if i < len(argRegs) {
+			gen.argDef(arg)
+			if pos, ok := gen.lookup(arg.Name.String()); ok {
+				gen.emitf("\tmovl\t%s, %d(%%ebp)\n", argRegs[i], -pos)
+			} else {
+				panic("ident is not defined")
+			}
+		} else {
+			panic("unimplemented args")
+		}
+	}
 
 	count := -1
 	for i, node := range v.Block.Nodes {
@@ -206,6 +232,14 @@ func (gen *Gen) binary(e BinaryExpr) {
 }
 
 func (gen *Gen) funcCall(e FuncCall) {
+	for i := len(e.Args) - 1; i >= 0; i-- {
+		gen.expr(e.Args[i])
+		if i > len(argRegs)-1 {
+			gen.emit(PUSHL, EAX)
+		} else {
+			gen.emit(MOVL, EAX, argRegs[i])
+		}
+	}
 	gen.emit(CALL, e.Ident)
 }
 
@@ -254,6 +288,14 @@ func (r Reg) String() string {
 		return "%ebp"
 	case ESP:
 		return "%esp"
+	case EDI:
+		return "%edi"
+	case ESI:
+		return "%esi"
+	case R8D:
+		return "%r8d"
+	case R9D:
+		return "%r9d"
 	default:
 		panic("undefined reg")
 	}

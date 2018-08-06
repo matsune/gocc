@@ -63,5 +63,7 @@ expect "int main() { return 1 + 2; }" 3
 expect "int a() { return 3; } int main() { return a(); }" 3
 expect "int a() { return 3 + 4 * 2; } int main() { return a(); }" 11
 
+expect "int sum(int a, int b) { return a + b; } int main() { return sum(1, 2); }" 3
+
 rm $TESTFILE
 rm $OUT
