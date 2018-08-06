@@ -1,5 +1,4 @@
 #!/bin/sh
-
 ASM=asm
 OUT=a.out
 TESTFILE=testfile
@@ -13,59 +12,68 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-
 if [ ! -d asm ]; then
   mkdir asm
 fi
 
-TEST_NUM=0
+alert() {
+  echo "${RED}${1}${CLEAR}"
+}
 
-expect() {
-  TEST_NUM=`expr $TEST_NUM + 1`
-  echo "[test${TEST_NUM}] ${1}"
-  echo "${1}" > $TESTFILE
-  ./gocc -o "${ASM}/${TEST_NUM}.s" $TESTFILE || return
-  cc -m32 "${ASM}/${TEST_NUM}.s" -o $OUT
+PASSED=0
+FAILED=0
+
+# test [test number] [expect]
+test() {
+  if [ -z $1 ]; then
+    alert "Test number is empty."
+    exit 1
+  fi
+  echo "[test ${1}]"
+
+  if [ -z $2 ]; then
+    alert "Expect value is empty."
+    exit 1
+  fi
+  FILE="test/${1}.c"
+  if [ ! -e $FILE ]; then
+    alert "${FILE} does not exist."
+    exit 1
+  fi
+  ASM_FILE="${ASM}/${1}.s"
+  ./gocc -o $ASM_FILE $FILE || return
+  gcc -m32 $ASM_FILE -o $OUT
   ./$OUT
   res=$?
+  cat $FILE
   if [ $res -eq $2 ]; then
     echo "=> ${res} ${GREEN}[OK]${CLEAR}"
+    echo ""
+    PASSED=$(( PASSED + 1 ))
   else
-    echo ${RED}
-    echo "[Failed]'${1}' expected ${2}, but got ${res}"
-    echo ${CLEAR}
+    alert "expected ${2}, but got ${res} [Failed]"
+    FAILED=$(( FAILED + 1 ))
   fi
 }
 
-expect "int main() { 1; }" 0
-expect "int main() { return 1; }" 1
-expect "int main() { return 2; }" 2
+test 1 0
+test 2 2
+test 3 2
+test 4 0
+test 5 41
 
-expect "int main() { return 1+2+3+4; }" 10
-expect "int main() { return 5-8+10-2; }" 5
+test 6 4
+test 7 20
+test 8 7
+test 9 30
+test 10 43
 
-expect "int main() { return 3*4; }" 12
-expect "int main() { return 5/3; }" 1
-expect "int main() { return 4%3; }" 1
-expect "int main() { return (3 * 4) % 2; }" 0
+test 11 11
+test 12 3
+test 13 15
+test 14 180
 
-expect "int main() { return (4 * 5 / 2 + 4) * 3 - 1; }" 41
+echo "Finished test."
+echo "${GREEN}PASSED: ${PASSED}\t${RED}FAILED: ${FAILED}${CLEAR}"
 
-expect "int main() { int a = 4; return a; }" 4
-expect "int main() { int a = 2 * (5 + 10 / 2); return a; }" 20
-expect "int main() { int a = 3; int b = a + 4; return b; }" 7
-expect "int main() { int a = 3; int b = 4 + a; return b; }" 7
-expect "int main() { int a = 5; int b = a + 8; int c = a + b + 12; return c; }" 30
-expect "int main() { int a = 1 + 2; int b = 3 + a + 5; int c = 10 + a * b; return c; }" 43
-
-expect "int main() { return 1 + 2; }" 3
-
-expect "int a() { return 3; } int main() { return a(); }" 3
-expect "int a() { return 3 + 4 * 2; } int main() { return a(); }" 11
-
-expect "int sum(int a, int b) { return a + b; } int main() { return sum(1, 2); }" 3
-expect "int add10(int a) { return a + 10; } int main() { int a = 5; return add10(a); }" 15
-expect "int sum(int a, int b, int c, int d, int e, int f, int g, int h) { return a+b+c+d+e+f+g+h; } int main() { int s = sum(1,2,3,4,5,6,7,8); return s * 5; }" 180
-
-rm $TESTFILE
 rm $OUT
