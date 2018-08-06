@@ -35,7 +35,7 @@ test() {
     alert "Expect value is empty."
     exit 1
   fi
-  FILE="test/${1}.c"
+  FILE="c/${1}.c"
   if [ ! -e $FILE ]; then
     alert "${FILE} does not exist."
     exit 1
@@ -72,6 +72,8 @@ test 11 11
 test 12 3
 test 13 15
 test 14 110
+
+test 15 98
 
 echo "Finished test."
 echo "${GREEN}PASSED: ${PASSED}\t${RED}FAILED: ${FAILED}${CLEAR}"

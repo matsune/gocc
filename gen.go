@@ -56,9 +56,10 @@ type Operand interface {
 	Str() string
 }
 
-func (r Reg) Str() string    { return r.String() }
-func (i IntVal) Str() string { return "$" + string(i.Token.Str) }
-func (i Ident) Str() string  { return i.Token.String() }
+func (r Reg) Str() string     { return r.String() }
+func (i IntVal) Str() string  { return "$" + string(i.Token.Str) }
+func (c CharVal) Str() string { return "$" + fmt.Sprintf("%d", c.Token.Str[0]) }
+func (i Ident) Str() string   { return i.Token.String() }
 
 // register offset of variable
 func (gen *Gen) add(n string, p int) {
@@ -190,6 +191,8 @@ func (gen *Gen) expr(e Expr) {
 			panic("ident is not defined")
 		}
 	case IntVal:
+		gen.emit(MOV, v, EAX)
+	case CharVal:
 		gen.emit(MOV, v, EAX)
 	case FuncCall:
 		gen.funcCall(v)

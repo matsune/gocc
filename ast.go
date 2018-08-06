@@ -15,6 +15,7 @@ const (
 	ASSIGN_EXPR
 	FUNC_CALL
 	INT_VAL
+	CHAR_VAL
 
 	// stmt
 	BLOCK_STMT
@@ -38,6 +39,8 @@ func (t Type) Size() int {
 	switch t {
 	case Int_t:
 		return 4
+	case Char_t:
+		return 1
 	default:
 		panic("unimplemented type size")
 	}
@@ -127,6 +130,10 @@ type (
 		Token *Token
 	}
 
+	CharVal struct {
+		Token *Token
+	}
+
 	FuncCall struct {
 		Ident Ident
 		Args  []Expr
@@ -162,6 +169,7 @@ func (UnaryExpr) Kind() Kind  { return UNARY_EXPR }
 func (AssignExpr) Kind() Kind { return ASSIGN_EXPR }
 func (FuncCall) Kind() Kind   { return FUNC_CALL }
 func (IntVal) Kind() Kind     { return INT_VAL }
+func (CharVal) Kind() Kind    { return CHAR_VAL }
 func (BlockStmt) Kind() Kind  { return BLOCK_STMT }
 func (ReturnStmt) Kind() Kind { return RETURN_STMT }
 func (ExprStmt) Kind() Kind   { return EXPR_STMT }
@@ -173,6 +181,7 @@ func (UnaryExpr) expr()  {}
 func (AssignExpr) expr() {}
 func (FuncCall) expr()   {}
 func (IntVal) expr()     {}
+func (CharVal) expr()    {}
 
 func (BlockStmt) stmt()  {}
 func (ReturnStmt) stmt() {}

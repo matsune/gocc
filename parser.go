@@ -541,6 +541,10 @@ func (p *Parser) primaryExpr() Expr {
 		n := IntVal{Token: p.token}
 		p.next()
 		return n
+	case p.match(CHAR_CONST):
+		n := CharVal{Token: p.token}
+		p.next()
+		return n
 	case p.match(LPAREN):
 		p.next()
 		e := p.expr()
@@ -548,7 +552,7 @@ func (p *Parser) primaryExpr() Expr {
 		p.next()
 		return e
 	default:
-		fmt.Println(p.token)
+		fmt.Println(p.token.Kind)
 		panic("primaryExpr: " + p.token.String())
 	}
 }
