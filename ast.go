@@ -3,64 +3,62 @@ package main
 type Kind int
 
 const (
-	VAR_DEF Kind = iota
-	FUNC_DEF
-	FUNC_ARG
-	AST_IDENT
-
+	AST_VarDef Kind = iota
+	AST_FuncDef
+	AST_FuncArg
+	AST_Ident
 	// expr
-	BINARY_EXPR
-	COND_EXPR
-	UNARY_EXPR
-	ASSIGN_EXPR
-	FUNC_CALL
-	INT_VAL
-	CHAR_VAL
-
+	AST_BinaryExpr
+	AST_CondExpr
+	AST_UnaryExpr
+	AST_AssignExpr
+	AST_FuncCall
+	AST_IntVal
+	AST_CharVal
 	// stmt
-	BLOCK_STMT
-	RETURN_STMT
-	EXPR_STMT
+	AST_BlockStmt
+	AST_ReturnStmt
+	AST_ExprStmt
 )
 
-type Type int
+type CType int
 
 const (
-	Int_t Type = iota
-	Void_t
-	Char_t
-	Float_t
-	Long_t
-	Short_t
-	Double_t
+	C_int CType = iota
+	C_void
+	C_char
+	C_float
+	C_long
+	C_short
+	C_double
 )
 
 // func (t Type) Size() int {
 // 	switch t {
-// 	case Int_t:
+// 	case C_int:
 // 		return 4
-// 	case Char_t:
+// 	case C_Char:
 // 		return 1
 // 	default:
 // 		panic("unimplemented type size")
 // 	}
 // }
 
-func (t Type) String() string {
+func (t CType) String() string {
 	switch t {
-	case Int_t:
+	case C_int:
 		return "int"
-	case Void_t:
+	case C_void:
 		return "void"
-	case Char_t:
+	case C_char:
 		return "char"
-	case Float_t:
+	case C_float:
 		return "float"
-	case Long_t:
+	case C_long:
 		return "long"
-	case Short_t:
+	case C_short:
 		return "short"
-	case Double_t:
+	case C_double:
 		return "double"
 	default:
 		panic("undefined Type")
@@ -79,20 +77,20 @@ type (
 	}
 
 	VarDef struct {
-		Type Type
+		Type CType
 		Name string
 		Init *Expr
 	}
 
 	FuncDef struct {
-		Type  Type
+		Type  CType
 		Name  string
 		Args  []FuncArg
 		Block BlockStmt
 	}
 
 	FuncArg struct {
-		Type Type
+		Type CType
 		Name *Token
 	}
 )
@@ -159,20 +157,20 @@ type (
 	}
 )
 
-func (VarDef) Kind() Kind     { return VAR_DEF }
-func (FuncDef) Kind() Kind    { return FUNC_DEF }
-func (FuncArg) Kind() Kind    { return FUNC_ARG }
-func (Ident) Kind() Kind      { return AST_IDENT }
-func (BinaryExpr) Kind() Kind { return BINARY_EXPR }
-func (CondExpr) Kind() Kind   { return COND_EXPR }
-func (UnaryExpr) Kind() Kind  { return UNARY_EXPR }
-func (AssignExpr) Kind() Kind { return ASSIGN_EXPR }
-func (FuncCall) Kind() Kind   { return FUNC_CALL }
-func (IntVal) Kind() Kind     { return INT_VAL }
-func (CharVal) Kind() Kind    { return CHAR_VAL }
-func (BlockStmt) Kind() Kind  { return BLOCK_STMT }
-func (ReturnStmt) Kind() Kind { return RETURN_STMT }
-func (ExprStmt) Kind() Kind   { return EXPR_STMT }
+func (VarDef) Kind() Kind     { return AST_VarDef }
+func (FuncDef) Kind() Kind    { return AST_FuncDef }
+func (FuncArg) Kind() Kind    { return AST_FuncArg }
+func (Ident) Kind() Kind      { return AST_Ident }
+func (BinaryExpr) Kind() Kind { return AST_BinaryExpr }
+func (CondExpr) Kind() Kind   { return AST_CondExpr }
+func (UnaryExpr) Kind() Kind  { return AST_UnaryExpr }
+func (AssignExpr) Kind() Kind { return AST_AssignExpr }
+func (FuncCall) Kind() Kind   { return AST_FuncCall }
+func (IntVal) Kind() Kind     { return AST_IntVal }
+func (CharVal) Kind() Kind    { return AST_CharVal }
+func (BlockStmt) Kind() Kind  { return AST_BlockStmt }
+func (ReturnStmt) Kind() Kind { return AST_ReturnStmt }
+func (ExprStmt) Kind() Kind   { return AST_ExprStmt }
 
 func (Ident) expr()      {}
 func (BinaryExpr) expr() {}

@@ -169,23 +169,23 @@ func (p *Parser) isType() bool {
 	return p.matchs([]TokenKind{INT, CHAR, VOID, FLOAT, LONG, SHORT, DOUBLE})
 }
 
-func (p *Parser) readType() Type {
-	var t Type
+func (p *Parser) readType() CType {
+	var t CType
 	switch p.token.Kind {
 	case INT:
-		t = Int_t
+		t = C_int
 	case CHAR:
-		t = Char_t
+		t = C_char
 	case VOID:
-		t = Void_t
+		t = C_void
 	case FLOAT:
-		t = Float_t
+		t = C_float
 	case LONG:
-		t = Long_t
+		t = C_long
 	case SHORT:
-		t = Short_t
+		t = C_short
 	case DOUBLE:
-		t = Double_t
+		t = C_double
 	default:
 		panic("readType")
 	}

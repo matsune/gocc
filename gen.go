@@ -173,7 +173,7 @@ func (gen *Gen) funcDef(v FuncDef) {
 	}
 
 	if count == -1 ||
-		(count > -1 && v.Block.Nodes[count].Kind() != RETURN_STMT) {
+		(count > -1 && v.Block.Nodes[count].Kind() != AST_ReturnStmt) {
 		gen.emit(XORL, EAX, EAX)
 	}
 

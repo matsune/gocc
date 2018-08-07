@@ -141,7 +141,7 @@ func TestBinaryExpr(t *testing.T) {
 	}
 }
 
-func varTypeExpect(t *testing.T, v VarDef, ty Type) {
+func varTypeExpect(t *testing.T, v VarDef, ty CType) {
 	if v.Type != ty {
 		t.Errorf("expected type is %s, but got %s", ty, v.Type)
 	}
@@ -160,7 +160,7 @@ func TestReadVarDef(t *testing.T) {
 	if !ok {
 		t.Errorf("expected type is VarDef, but got %s", reflect.TypeOf(n))
 	}
-	varTypeExpect(t, v, Int_t)
+	varTypeExpect(t, v, C_int)
 	varNameExpect(t, v, "a")
 	if v.Init != nil {
 		t.Errorf("expected varDef is not initialized")
@@ -174,7 +174,7 @@ func TestReadVarDefWithInit(t *testing.T) {
 	if !ok {
 		t.Errorf("expected type is VarDef, but got %s", reflect.TypeOf(n))
 	}
-	varTypeExpect(t, v, Int_t)
+	varTypeExpect(t, v, C_int)
 	varNameExpect(t, v, "a")
 	b, ok := (*v.Init).(BinaryExpr)
 	if !ok {
@@ -187,8 +187,8 @@ func TestReadVarDefWithInit(t *testing.T) {
 func TestReadFuncDef(t *testing.T) {
 	p := NewParser([]byte("int main(int argc) { int a = 2 + 4; }"))
 	f := p.readFuncDef()
-	if f.Type != Int_t {
-		t.Errorf("expected type is %s, but got %s", Int_t, f.Type)
+	if f.Type != C_int {
+		t.Errorf("expected type is %s, but got %s", C_int, f.Type)
 	}
 	if f.Name != "main" {
 		t.Errorf("expected name is %s, but got %s", "main", f.Name)
@@ -196,8 +196,8 @@ func TestReadFuncDef(t *testing.T) {
 	if len(f.Args) != 1 {
 		t.Errorf("expected args count is %d, but got %d", 1, len(f.Args))
 	}
-	if f.Args[0].Type != Int_t {
-		t.Errorf("expected type is %s, but got %s", Int_t, f.Args[0].Type)
+	if f.Args[0].Type != C_int {
+		t.Errorf("expected type is %s, but got %s", C_int, f.Args[0].Type)
 	}
 	if f.Args[0].Name.String() != "argc" {
 		t.Errorf("expected type is %s, but got %s", "argc", f.Args[0].Name)
@@ -210,8 +210,8 @@ func TestReadFuncDef(t *testing.T) {
 	if !ok {
 		t.Errorf("expected block nodes[0] is VarDef, but got %s", reflect.TypeOf(f.Block.Nodes[0]))
 	}
-	if v.Type != Int_t {
-		t.Errorf("expected type is %s, but got %s", Int_t, v.Type)
+	if v.Type != C_int {
+		t.Errorf("expected type is %s, but got %s", C_int, v.Type)
 	}
 	if v.Name != "a" {
 		t.Errorf("expected name is %s, but got %s", "a", v.Name)
