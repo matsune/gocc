@@ -74,6 +74,7 @@ test 13 15
 test 14 110
 
 test 15 98
+test 16 195
 
 echo "Finished test."
 echo "${GREEN}PASSED: ${PASSED}\t${RED}FAILED: ${FAILED}${CLEAR}"

@@ -127,16 +127,16 @@ func (gen *Gen) varDef(n VarDef) {
 	if n.Init != nil {
 		gen.expr(*n.Init)
 	}
-	gen.pos += n.Type.Size()
+	gen.pos += 4 //n.Type.Size()
 	gen.add(n.Name, gen.pos)
-	gen.emitf("\tsub \t$%d, %%rsp\n", n.Type.Size())
+	gen.emitf("\tsub \t$%d, %%rsp\n", 4) //n.Type.Size())
 	gen.emitf("\tmov \t%%eax, %d(%%rbp)\n", -gen.pos)
 }
 
 func (gen *Gen) argDef(a FuncArg) {
-	gen.pos += a.Type.Size()
+	gen.pos += 4 //a.Type.Size()
 	gen.add(a.Name.String(), gen.pos)
-	gen.emitf("\tsub \t$%d, %%rsp\n", a.Type.Size())
+	gen.emitf("\tsub \t$%d, %%rsp\n", 4) //a.Type.Size())
 }
 
 func (gen *Gen) funcDef(v FuncDef) {

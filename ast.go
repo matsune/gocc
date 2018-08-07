@@ -35,16 +35,16 @@ const (
 	Double_t
 )
 
-func (t Type) Size() int {
-	switch t {
-	case Int_t:
-		return 4
-	case Char_t:
-		return 1
-	default:
-		panic("unimplemented type size")
-	}
-}
+// func (t Type) Size() int {
+// 	switch t {
+// 	case Int_t:
+// 		return 4
+// 	case Char_t:
+// 		return 1
+// 	default:
+// 		panic("unimplemented type size")
+// 	}
+// }
 
 func (t Type) String() string {
 	switch t {
