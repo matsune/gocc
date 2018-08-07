@@ -33,16 +33,16 @@ const (
 	C_double
 )
 
-// func (t Type) Size() int {
-// 	switch t {
-// 	case C_int:
-// 		return 4
-// 	case C_Char:
-// 		return 1
-// 	default:
-// 		panic("unimplemented type size")
-// 	}
-// }
+func (t CType) Bytes() int {
+	switch t {
+	case C_int:
+		return 4
+	case C_char:
+		return 1
+	default:
+		panic("unimplemented type size")
+	}
+}
 
 func (t CType) String() string {
 	switch t {

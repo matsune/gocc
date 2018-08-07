@@ -15,53 +15,36 @@ func NewGen() *Gen {
 	return &Gen{s: "", pos: 0, m: Map{}}
 }
 
-type Code int
+var ARG_COUNT = 6
 
-const (
-	ADDL Code = iota
-	SUBL
-	MOV
-	IMUL
-	IDIV
-	CLTD
-	XORL
-	PUSH
-	POP
-	CALL
-	LEAVE
-	RET
-)
-
-type Reg int
-
-const (
-	EAX Reg = iota
-	EBX
-	ECX
-	EDX
-	EBP
-	ESP
-	EDI
-	ESI
-	R8D
-	R9D
-	RAX
-	RBP
-	RSP
-)
-
-var argRegs = []Reg{EDI, ESI, EDX, ECX, R8D, R9D}
+func argsRegister(i int, t CType) Register {
+	switch i {
+	case 0:
+		return registerDI(t)
+	case 1:
+		return registerSI(t)
+	case 2:
+		return registerD(t)
+	case 3:
+		return registerC(t)
+	case 4:
+		return registerR8(t)
+	case 5:
+		return registerR9(t)
+	default:
+		panic("max i is 5")
+	}
+}
 
 type Operand interface {
 	Str() string
 }
 
-func (r Reg) Str() string     { return r.String() }
-func (i IntVal) Str() string  { return "$" + string(i.Token.Str) }
-func (c CharVal) Str() string { return "$" + fmt.Sprintf("%d", c.Token.Str[0]) }
-func (i Ident) Str() string   { return i.Token.String() }
+func (r Register) Str() string { return r.String() }
+func (i IntVal) Str() string   { return "$" + string(i.Token.Str) }
+func (c CharVal) Str() string  { return "$" + fmt.Sprintf("%d", c.Token.Str[0]) }
+func (i Ident) Str() string    { return i.Token.String() }
 
-// register offset of variable
 func (gen *Gen) add(n string, p int) {
 	gen.m[n] = p
 }
@@ -75,7 +58,7 @@ func (gen *Gen) lookup(n string) (int, bool) {
 	return 0, false
 }
 
-func (gen *Gen) emit(c Code, ops ...Operand) {
+func (gen *Gen) emit(c Opcode, ops ...Operand) {
 	gen.s += "\t" + c.String()
 	for i, v := range ops {
 		if i != 0 {
@@ -96,7 +79,7 @@ func (gen *Gen) global(n string) {
 
 func (gen *Gen) prologue() {
 	gen.emit(PUSH, RBP)
-	gen.emit(MOV, RSP, RBP)
+	gen.emit(MOVQ, RSP, RBP)
 }
 
 func (gen *Gen) epilogue() {
@@ -127,16 +110,16 @@ func (gen *Gen) varDef(n VarDef) {
 	if n.Init != nil {
 		gen.expr(*n.Init)
 	}
-	gen.pos += 4 //n.Type.Size()
+	gen.pos += n.Type.Bytes()
 	gen.add(n.Name, gen.pos)
-	gen.emitf("\tsub \t$%d, %%rsp\n", 4) //n.Type.Size())
-	gen.emitf("\tmov \t%%eax, %d(%%rbp)\n", -gen.pos)
+	gen.emitf("\t%s\t$%d, %s\n", SUBQ, n.Type.Bytes(), RSP)
+	gen.emitf("\t%s\t%s, %d(%s)\n", MOVL, EAX, -gen.pos, RBP)
 }
 
 func (gen *Gen) argDef(a FuncArg) {
-	gen.pos += 4 //a.Type.Size()
+	gen.pos += a.Type.Bytes()
 	gen.add(a.Name.String(), gen.pos)
-	gen.emitf("\tsub \t$%d, %%rsp\n", 4) //a.Type.Size())
+	gen.emitf("\t%s\t$%d, %s\n", SUBQ, a.Type.Bytes(), RSP)
 }
 
 func (gen *Gen) funcDef(v FuncDef) {
@@ -147,6 +130,7 @@ func (gen *Gen) funcDef(v FuncDef) {
 		gen.global("_main")
 		gen.emitFuncDef("_main")
 	} else {
+		gen.global(v.Name)
 		gen.emitFuncDef(v.Name)
 	}
 	gen.prologue()
@@ -154,16 +138,15 @@ func (gen *Gen) funcDef(v FuncDef) {
 	for i, arg := range v.Args {
 		gen.argDef(arg)
 		if pos, ok := gen.lookup(arg.Name.String()); ok {
-			if i < len(argRegs) {
-				gen.emitf("\tmov \t%s, %d(%%rbp)\n", argRegs[i], -pos)
+			if i < ARG_COUNT {
+				gen.emitf("\t%s\t%s, %d(%s)\n", mov(arg.Type), argsRegister(i, arg.Type), -pos, RBP)
 			} else {
-				gen.emitf("\tmov \t%d(%%rbp), %%eax\n", (i-len(argRegs)+1)*8+8)
-				gen.emitf("\tmov \t%%eax, %d(%%rbp)\n", -pos)
+				gen.emitf("\t%s\t%d(%s), %s\n", MOVL, (i-ARG_COUNT+1)*8+8, RBP, EAX)
+				gen.emitf("\t%s\t%s, %d(%s)\n", MOVL, EAX, -pos, RBP)
 			}
 		} else {
 			panic("ident is not defined")
 		}
-
 	}
 
 	count := -1
@@ -186,14 +169,14 @@ func (gen *Gen) expr(e Expr) {
 		gen.binary(v)
 	case Ident:
 		if pos, ok := gen.lookup(v.Token.String()); ok {
-			gen.emitf("\tmov \t%d(%%rbp), %%eax\n", -pos)
+			gen.emitf("\t%s \t%d(%s), %s\n", MOVL, -pos, RBP, EAX)
 		} else {
 			panic("ident is not defined")
 		}
 	case IntVal:
-		gen.emit(MOV, v, EAX)
+		gen.emit(mov(C_int), v, registerA(C_int))
 	case CharVal:
-		gen.emit(MOV, v, EAX)
+		gen.emit(mov(C_char), v, registerA(C_char))
 	case FuncCall:
 		gen.funcCall(v)
 	}
@@ -213,11 +196,11 @@ func (gen *Gen) binary(e BinaryExpr) {
 	gen.emit(PUSH, RAX)
 
 	gen.expr(e.Y)
-	gen.emit(MOV, EAX, EBX)
+	gen.emit(MOVL, EAX, EBX)
 
 	gen.emit(POP, RAX)
 
-	var c Code
+	var c Opcode
 	if e.Op.Kind == ADD {
 		c = ADDL
 	} else if e.Op.Kind == SUB {
@@ -234,7 +217,7 @@ func (gen *Gen) binary(e BinaryExpr) {
 		gen.emit(CLTD)
 		gen.emit(IDIV, EBX)
 		if e.Op.Kind == REM {
-			gen.emit(MOV, EDX, EAX)
+			gen.emit(MOVL, EDX, EAX)
 		}
 	} else {
 		gen.emit(c, EBX, EAX)
@@ -244,75 +227,12 @@ func (gen *Gen) binary(e BinaryExpr) {
 func (gen *Gen) funcCall(e FuncCall) {
 	for i := len(e.Args) - 1; i >= 0; i-- {
 		gen.expr(e.Args[i])
-		if i > len(argRegs)-1 {
+		if i > ARG_COUNT-1 {
 			gen.emit(PUSH, RAX)
 		} else {
-			gen.emit(MOV, EAX, argRegs[i])
+			// FIXME
+			gen.emit(MOVL, EAX, argsRegister(i, C_int))
 		}
 	}
 	gen.emit(CALL, e.Ident)
-}
-
-func (c Code) String() string {
-	switch c {
-	case ADDL:
-		return "add "
-	case SUBL:
-		return "sub "
-	case MOV:
-		return "mov "
-	case IMUL:
-		return "imul"
-	case IDIV:
-		return "idiv"
-	case CLTD:
-		return "cltd"
-	case XORL:
-		return "xorl"
-	case PUSH:
-		return "push"
-	case POP:
-		return "pop "
-	case CALL:
-		return "call"
-	case LEAVE:
-		return "leave"
-	case RET:
-		return "ret"
-	default:
-		panic("undefined code")
-	}
-}
-
-func (r Reg) String() string {
-	switch r {
-	case EAX:
-		return "%eax"
-	case EBX:
-		return "%ebx"
-	case ECX:
-		return "%ecx"
-	case EDX:
-		return "%edx"
-	case EBP:
-		return "%ebp"
-	case ESP:
-		return "%esp"
-	case EDI:
-		return "%edi"
-	case ESI:
-		return "%esi"
-	case R8D:
-		return "%r8d"
-	case R9D:
-		return "%r9d"
-	case RAX:
-		return "%rax"
-	case RBP:
-		return "%rbp"
-	case RSP:
-		return "%rsp"
-	default:
-		panic("undefined reg")
-	}
 }
