@@ -15,6 +15,8 @@ const (
 	AST_FuncCall
 	AST_IntVal
 	AST_CharVal
+	AST_PointerVal
+	AST_AddressVal
 	// stmt
 	AST_BlockStmt
 	AST_ReturnStmt
@@ -31,6 +33,7 @@ const (
 	C_long
 	C_short
 	C_double
+	C_pointer
 )
 
 func (t CType) Bytes() int {
@@ -39,6 +42,8 @@ func (t CType) Bytes() int {
 		return 4
 	case C_char:
 		return 1
+	case C_pointer:
+		return 8
 	default:
 		panic("unimplemented type size")
 	}
@@ -60,6 +65,8 @@ func (t CType) String() string {
 		return "short"
 	case C_double:
 		return "double"
+	case C_pointer:
+		return "pointer"
 	default:
 		panic("undefined Type")
 	}
@@ -136,6 +143,13 @@ type (
 		Ident Ident
 		Args  []Expr
 	}
+
+	PointerVal struct {
+		Token *Token
+	}
+	AddressVal struct {
+		Token *Token
+	}
 )
 
 type (
@@ -168,6 +182,8 @@ func (AssignExpr) Kind() Kind { return AST_AssignExpr }
 func (FuncCall) Kind() Kind   { return AST_FuncCall }
 func (IntVal) Kind() Kind     { return AST_IntVal }
 func (CharVal) Kind() Kind    { return AST_CharVal }
+func (PointerVal) Kind() Kind { return AST_PointerVal }
+func (AddressVal) Kind() Kind { return AST_AddressVal }
 func (BlockStmt) Kind() Kind  { return AST_BlockStmt }
 func (ReturnStmt) Kind() Kind { return AST_ReturnStmt }
 func (ExprStmt) Kind() Kind   { return AST_ExprStmt }
@@ -180,6 +196,8 @@ func (AssignExpr) expr() {}
 func (FuncCall) expr()   {}
 func (IntVal) expr()     {}
 func (CharVal) expr()    {}
+func (PointerVal) expr() {}
+func (AddressVal) expr() {}
 
 func (BlockStmt) stmt()  {}
 func (ReturnStmt) stmt() {}

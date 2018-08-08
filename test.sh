@@ -21,10 +21,11 @@ alert() {
 }
 
 PASSED=0
-FAILED=0
+COUNT=0
 
 # test [test number] [expect]
 test() {
+  COUNT=$(( COUNT + 1 ))
   if [ -z $1 ]; then
     alert "Test number is empty."
     exit 1
@@ -52,7 +53,6 @@ test() {
     PASSED=$(( PASSED + 1 ))
   else
     alert "expected ${2}, but got ${res} [Failed]"
-    FAILED=$(( FAILED + 1 ))
   fi
 }
 
@@ -75,8 +75,12 @@ test 14 110
 
 test 15 98
 test 16 195
+test 17 118
+
+test 18 3
 
 echo "Finished test."
+FAILED=$(( COUNT - PASSED ))
 echo "${GREEN}PASSED: ${PASSED}\t${RED}FAILED: ${FAILED}${CLEAR}"
 
 rm $OUT

@@ -430,6 +430,20 @@ func (l *Lexer) parseOperator(t *Token) {
 		var ok bool
 
 		if c, ok = l.consume(); !ok {
+			switch prevC {
+			case '!':
+				t.Kind = NOT
+			case '=':
+				t.Kind = ASSIGN
+			case '*':
+				t.Kind = MUL
+			case '%':
+				t.Kind = REM
+			case '^':
+				t.Kind = XOR
+			default:
+				break
+			}
 			return
 		}
 

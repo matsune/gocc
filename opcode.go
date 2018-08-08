@@ -16,6 +16,7 @@ const (
 	XORL
 	PUSH
 	POP
+	LEAQ
 	CALL
 	LEAVE
 	RET
@@ -64,6 +65,8 @@ func (c Opcode) String() string {
 		return "pop "
 	case CALL:
 		return "call"
+	case LEAQ:
+		return "leaq"
 	case LEAVE:
 		return "leave"
 	case RET:

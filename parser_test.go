@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -263,4 +264,28 @@ func TestFuncCall2(t *testing.T) {
 	if len(f.Block.Nodes) != 1 {
 		t.Errorf("expected nodes count is %d, but got %d", 1, len(f.Block.Nodes))
 	}
+}
+
+func TestReadType(t *testing.T) {
+	p := NewParser([]byte("int"))
+	ty := p.readType()
+	if ty != C_int {
+		t.Errorf("expected type is %s, but got %s", C_int, ty)
+	}
+	p = NewParser([]byte("char"))
+	ty = p.readType()
+	if ty != C_char {
+		t.Errorf("expected type is %s, but got %s", C_char, ty)
+	}
+	p = NewParser([]byte("int *"))
+	ty = p.readType()
+	if ty != C_pointer {
+		t.Errorf("expected type is %s, but got %s", C_pointer, ty)
+	}
+}
+
+func TestPointer(t *testing.T) {
+	p := NewParser([]byte("{ *a = *a + b; }"))
+	e := p.blockStmt()
+	fmt.Println(e.Nodes[0].(ExprStmt).Expr.(AssignExpr).R.(BinaryExpr).X.(PointerVal).Token)
 }

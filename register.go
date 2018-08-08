@@ -158,89 +158,89 @@ func registerR9(t CType) Register {
 func (r Register) String() string {
 	switch r {
 	case AL:
-		return "%AL"
+		return "%al"
 	case AH:
-		return "%AH"
+		return "%ah"
 	case AX:
-		return "%AX"
+		return "%ax"
 	case EAX:
-		return "%EAX"
+		return "%eax"
 	case RAX:
-		return "%RAX"
+		return "%rax"
 
 	case BL:
-		return "%BL"
+		return "%bl"
 	case BH:
-		return "%BH"
+		return "%bh"
 	case BX:
-		return "%BX"
+		return "%bx"
 	case EBX:
-		return "%EBX"
+		return "%ebx"
 	case RBX:
-		return "%RBX"
+		return "%rbx"
 
 	case CL:
-		return "%CL"
+		return "%cl"
 	case CH:
-		return "%CH"
+		return "%ch"
 	case CX:
-		return "%CX"
+		return "%cx"
 	case ECX:
-		return "%ECX"
+		return "%ecx"
 	case RCX:
-		return "%RCX"
+		return "%rcx"
 
 	case DL:
-		return "%DL"
+		return "%dl"
 	case DH:
-		return "%DH"
+		return "%dh"
 	case DX:
-		return "%DX"
+		return "%dx"
 	case EDX:
-		return "%EDX"
+		return "%edx"
 	case RDX:
-		return "%RDX"
+		return "%rdx"
 
 	case SIL:
-		return "%SIL"
+		return "%sil"
 	case SI:
-		return "%SI"
+		return "%si"
 	case ESI:
-		return "%ESI"
+		return "%esi"
 	case RSI:
-		return "%RSI"
+		return "%rsi"
 
 	case DIL:
-		return "%DIL"
+		return "%dil"
 	case DI:
-		return "%DI"
+		return "%di"
 	case EDI:
-		return "%EDI"
+		return "%edi"
 	case RDI:
-		return "%RDI"
+		return "%rdi"
 
 	case R8B:
-		return "%R8B"
+		return "%r8b"
 	case R8W:
-		return "%R8W"
+		return "%r8w"
 	case R8D:
-		return "%R8D"
+		return "%r8d"
 	case R8:
-		return "%R8"
+		return "%r8"
 
 	case R9B:
-		return "%R9B"
+		return "%r9b"
 	case R9W:
-		return "%R9W"
+		return "%r9w"
 	case R9D:
-		return "%R9D"
+		return "%r9d"
 	case R9:
-		return "%R9"
+		return "%r9"
 
 	case RBP:
-		return "%RBP"
+		return "%rbp"
 	case RSP:
-		return "%RSP"
+		return "%rsp"
 
 	default:
 		panic("undefined Register")

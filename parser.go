@@ -171,25 +171,33 @@ func (p *Parser) isType() bool {
 
 func (p *Parser) readType() CType {
 	var t CType
-	switch p.token.Kind {
-	case INT:
-		t = C_int
-	case CHAR:
-		t = C_char
-	case VOID:
-		t = C_void
-	case FLOAT:
-		t = C_float
-	case LONG:
-		t = C_long
-	case SHORT:
-		t = C_short
-	case DOUBLE:
-		t = C_double
-	default:
-		panic("readType")
+	for {
+		if p.isType() {
+			switch p.token.Kind {
+			case INT:
+				t = C_int
+			case CHAR:
+				t = C_char
+			case VOID:
+				t = C_void
+			case FLOAT:
+				t = C_float
+			case LONG:
+				t = C_long
+			case SHORT:
+				t = C_short
+			case DOUBLE:
+				t = C_double
+			default:
+				panic("readType")
+			}
+		} else if p.match(MUL) { // * as pointer
+			t = C_pointer
+		} else {
+			break
+		}
+		p.next()
 	}
-	p.next()
 	return t
 }
 
@@ -297,8 +305,8 @@ func (p *Parser) assignExpr() Expr {
 		op := p.token
 		p.next()
 		R := p.assignExpr()
-		p.assert(SEMICOLON)
-		p.next()
+		// p.assert(SEMICOLON)
+		// p.next()
 
 		n := AssignExpr{L: L, Op: op, R: R}
 
@@ -495,7 +503,18 @@ func (p *Parser) unaryExpr() Expr {
 		op := p.token
 		p.next()
 
-		return UnaryExpr{Op: op, Expr: p.castExpr()}
+		switch op.Kind {
+		case MUL:
+			pv := PointerVal{Token: p.token}
+			p.next()
+			return pv
+		case AND:
+			av := AddressVal{Token: p.token}
+			p.next()
+			return av
+		default:
+			return UnaryExpr{Op: op, Expr: p.castExpr()}
+		}
 	} else {
 		return p.postfixExpr()
 	}
