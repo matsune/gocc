@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 )
@@ -287,5 +286,53 @@ func TestReadType(t *testing.T) {
 func TestPointer(t *testing.T) {
 	p := NewParser([]byte("{ *a = *a + b; }"))
 	e := p.blockStmt()
-	fmt.Println(e.Nodes[0].(ExprStmt).Expr.(AssignExpr).R.(BinaryExpr).X.(PointerVal).Token)
+	a, ok := e.Nodes[0].(ExprStmt).Expr.(AssignExpr)
+	if !ok {
+		t.Errorf("expected type is AssignExpr, but got %s", reflect.TypeOf(e.Nodes[0].(ExprStmt).Expr))
+	}
+	_, ok = a.L.(PointerVal)
+	if !ok {
+		t.Errorf("expected type is PointerVal, but got %s", reflect.TypeOf(a.L))
+	}
+}
+
+func TestParseArray(t *testing.T) {
+	p := NewParser([]byte("int a[4];"))
+	e := p.readVarDef()
+	v, ok := e.(ArrayDef)
+	if !ok {
+		t.Errorf("expected type is ArrayDef, but got %s", reflect.TypeOf(e))
+	}
+	if v.Type != C_int {
+		t.Errorf("expected type is %s, but got %s", C_int, v.Type)
+	}
+	if v.Name != "a" {
+		t.Errorf("expected name is %s, but got %s", "a", v.Name)
+	}
+	vv, ok := v.Subscript[0].(IntVal)
+	if !ok {
+		t.Errorf("expected type is IntVal, but got %s", reflect.TypeOf(v.Subscript[0]))
+	}
+	if vv.Token.String() != "4" {
+		t.Errorf("expected string is 4, but got %s", vv.Token.String())
+	}
+	if v.Init != nil {
+		t.Errorf("expected init is nil")
+	}
+}
+
+func TestParseArrayInit(t *testing.T) {
+	p := NewParser([]byte("int a[4] = {0, 1, 2, 3};"))
+	e := p.readVarDef()
+	v, ok := e.(ArrayDef)
+	if !ok {
+		t.Errorf("expected type is ArrayDef, but got %s", reflect.TypeOf(e))
+	}
+	i, ok := (*v.Init).(ArrayInit)
+	if !ok {
+		t.Errorf("expected type is ArrayInit, but got %s", reflect.TypeOf(*v.Init))
+	}
+	if len(i.List) != 4 {
+		t.Errorf("expected count of elements is %d, but got %d", 4, len(i.List))
+	}
 }

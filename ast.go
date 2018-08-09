@@ -4,6 +4,7 @@ type Kind int
 
 const (
 	AST_VarDef Kind = iota
+	AST_ArrayDef
 	AST_FuncDef
 	AST_FuncArg
 	AST_Ident
@@ -17,6 +18,7 @@ const (
 	AST_CharVal
 	AST_PointerVal
 	AST_AddressVal
+	AST_ArrayInit
 	// stmt
 	AST_BlockStmt
 	AST_ReturnStmt
@@ -89,6 +91,13 @@ type (
 		Init *Expr
 	}
 
+	ArrayDef struct {
+		Type      CType
+		Name      string
+		Subscript []Expr
+		Init      *Expr
+	}
+
 	FuncDef struct {
 		Type  CType
 		Name  string
@@ -150,6 +159,10 @@ type (
 	AddressVal struct {
 		Token *Token
 	}
+
+	ArrayInit struct {
+		List []Expr
+	}
 )
 
 type (
@@ -172,6 +185,7 @@ type (
 )
 
 func (VarDef) Kind() Kind     { return AST_VarDef }
+func (ArrayDef) Kind() Kind   { return AST_ArrayDef }
 func (FuncDef) Kind() Kind    { return AST_FuncDef }
 func (FuncArg) Kind() Kind    { return AST_FuncArg }
 func (Ident) Kind() Kind      { return AST_Ident }
@@ -184,6 +198,7 @@ func (IntVal) Kind() Kind     { return AST_IntVal }
 func (CharVal) Kind() Kind    { return AST_CharVal }
 func (PointerVal) Kind() Kind { return AST_PointerVal }
 func (AddressVal) Kind() Kind { return AST_AddressVal }
+func (ArrayInit) Kind() Kind  { return AST_ArrayInit }
 func (BlockStmt) Kind() Kind  { return AST_BlockStmt }
 func (ReturnStmt) Kind() Kind { return AST_ReturnStmt }
 func (ExprStmt) Kind() Kind   { return AST_ExprStmt }
@@ -198,6 +213,7 @@ func (IntVal) expr()     {}
 func (CharVal) expr()    {}
 func (PointerVal) expr() {}
 func (AddressVal) expr() {}
+func (ArrayInit) expr()  {}
 
 func (BlockStmt) stmt()  {}
 func (ReturnStmt) stmt() {}

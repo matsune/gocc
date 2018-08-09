@@ -146,8 +146,19 @@ func (p *Parser) readVarDef() Node {
 
 	var n Node
 	if p.match(LBRACK) {
-		panic("read subscript")
+		var s []Expr
+		for p.match(LBRACK) {
+			s = append(s, p.readSubscript())
+		}
+		arr := ArrayDef{Type: t, Name: name, Subscript: s}
 
+		if p.match(ASSIGN) {
+			p.next()
+			init := p.readArrayInit()
+			arr.Init = &init
+			// obj.IsInit = true
+		}
+		n = arr
 	} else {
 		v := VarDef{Type: t, Name: name}
 
@@ -163,6 +174,45 @@ func (p *Parser) readVarDef() Node {
 	p.next()
 
 	return n
+}
+
+func (p *Parser) readSubscript() Expr {
+	p.assert(LBRACK)
+	p.next()
+
+	if p.match(RBRACK) {
+		p.next()
+		return nil
+	}
+
+	e := p.conditionalExpr()
+
+	p.assert(RBRACK)
+	p.next()
+
+	return e
+}
+
+func (p *Parser) readArrayInit() Expr {
+	if p.match(LBRACE) {
+		p.next()
+		n := ArrayInit{}
+		for {
+			e := p.assignExpr()
+			n.List = append(n.List, e)
+			if p.match(RBRACE) {
+				break
+			} else if p.match(COMMA) {
+				p.next()
+			} else {
+				panic("expected } or ,")
+			}
+		}
+		p.next()
+		return n
+	}
+	a := p.assignExpr()
+	return a
 }
 
 func (p *Parser) isType() bool {
@@ -305,20 +355,7 @@ func (p *Parser) assignExpr() Expr {
 		op := p.token
 		p.next()
 		R := p.assignExpr()
-		// p.assert(SEMICOLON)
-		// p.next()
-
 		n := AssignExpr{L: L, Op: op, R: R}
-
-		// look up ident name was declared before
-		// ident, _ := L.(Ident)
-		// name := string(ident.Str)
-		// obj := p.lookup(name)
-		// if obj == nil {
-		// 	panic(name + " is not declared")
-		// }
-		// obj.IsInit = true
-
 		return n
 	} else {
 		return p.conditionalExpr()
