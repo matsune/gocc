@@ -247,22 +247,6 @@ func (gen *Gen) funcCall(e FuncCall) {
 
 func (gen *Gen) unaryExpr(e UnaryExpr) {
 	panic("gen.unaryExpr")
-	// switch e.Op.Kind {
-	// case AND:
-	// 	switch v := e.Expr.(type) {
-	// 	case Ident:
-	// 		if col, ok := gen.lookup(v.Token.String()); ok {
-	// 			gen.emitf("\t%s\t%d(%s), %s\n", LEAQ, -col.pos, RBP, RAX)
-	// 		} else {
-	// 			panic("ident is not defined")
-	// 		}
-	// 	default:
-	// 		panic("unimplemented unaryExpr type")
-	// 	}
-	// default:
-	// 	fmt.Println(e)
-	// 	panic("unimplemented unaryExpr")
-	// }
 }
 
 func (gen *Gen) assignExpr(e AssignExpr) {
@@ -281,30 +265,10 @@ func (gen *Gen) assignExpr(e AssignExpr) {
 		gen.emit(POP, RBX)
 		gen.emit(MOVL, EBX, EAX)
 	}
-
-	// if e.Op.Kind == ASSIGN {
-	// 	switch l := e.L.(type) {
-	// 	case Ident:
-	// 		if col, ok := gen.lookup(l.Token.String()); ok {
-	// 			gen.emitf("\t%s\t%s, %d(%s)\n", mov(col.ty), registerA(col.ty), -col.pos, RBP)
-	// 		} else {
-	// 			panic("ident is not defined")
-	// 		}
-	// 	case PointerVal:
-	// 		gen.pointerVal(l)
-	// 		gen.emit(POP, RBX)
-	// 		gen.emitf("\t%s\t%s, (%s)\n", MOVL, EBX, EAX)
-	// 	default:
-	// 		panic("assignExpr L is not ident")
-	// 	}
-	// } else {
-	// 	panic("unimplemented op in assignExpr")
-	// }
 }
 
 func (gen *Gen) pointerVal(e PointerVal) {
 	if col, ok := gen.lookup(e.Token.String()); ok {
-		// gen.emitf("\t%s\t%d(%s), %s\n", mov(col.ty), -col.pos, RBP, registerA(col.ty))
 		gen.emitf("\t%s\t%d(%s), %s\n", mov(col.ty), -col.pos, RBP, registerB(col.ty))
 		gen.emitf("\t%s\t(%s), %s\n", mov(col.ty), registerB(col.ty), registerA(col.ty))
 	} else {

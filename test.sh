@@ -78,6 +78,7 @@ test 16 195
 test 17 118
 
 test 18 3
+test 19 20
 
 echo "Finished test."
 FAILED=$(( COUNT - PASSED ))
