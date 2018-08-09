@@ -148,8 +148,8 @@ func varTypeExpect(t *testing.T, v VarDef, ty CType) {
 }
 
 func varNameExpect(t *testing.T, v VarDef, name string) {
-	if v.Name != name {
-		t.Errorf("expected name is %s, but got %s", name, v.Name)
+	if v.Token.String() != name {
+		t.Errorf("expected name is %s, but got %s", name, v.Token.String())
 	}
 }
 
@@ -213,8 +213,8 @@ func TestReadFuncDef(t *testing.T) {
 	if v.Type != C_int {
 		t.Errorf("expected type is %s, but got %s", C_int, v.Type)
 	}
-	if v.Name != "a" {
-		t.Errorf("expected name is %s, but got %s", "a", v.Name)
+	if v.Token.String() != "a" {
+		t.Errorf("expected name is %s, but got %s", "a", v.Token.String())
 	}
 }
 
@@ -306,12 +306,12 @@ func TestParseArray(t *testing.T) {
 	if v.Type != C_int {
 		t.Errorf("expected type is %s, but got %s", C_int, v.Type)
 	}
-	if v.Name != "a" {
-		t.Errorf("expected name is %s, but got %s", "a", v.Name)
+	if v.Token.String() != "a" {
+		t.Errorf("expected name is %s, but got %s", "a", v.Token.String())
 	}
-	vv, ok := v.Subscript[0].(IntVal)
+	vv, ok := (*v.Subscript).(IntVal)
 	if !ok {
-		t.Errorf("expected type is IntVal, but got %s", reflect.TypeOf(v.Subscript[0]))
+		t.Errorf("expected type is IntVal, but got %s", reflect.TypeOf(v.Subscript))
 	}
 	if vv.Token.String() != "4" {
 		t.Errorf("expected string is 4, but got %s", vv.Token.String())
@@ -334,5 +334,28 @@ func TestParseArrayInit(t *testing.T) {
 	}
 	if len(i.List) != 4 {
 		t.Errorf("expected count of elements is %d, but got %d", 4, len(i.List))
+	}
+}
+
+func TestReturnSubscript(t *testing.T) {
+	p := NewParser([]byte("return a[0];"))
+	e := p.stmt()
+	v, ok := e.(ReturnStmt)
+	if !ok {
+		t.Errorf("expected type is ReturnStmt, but got %s", reflect.TypeOf(e))
+	}
+	vv, ok := v.Expr.(SubscriptExpr)
+	if !ok {
+		t.Errorf("expected type is SubscriptExpr, but got %s", reflect.TypeOf(v.Expr))
+	}
+	if vv.Token.String() != "a" {
+		t.Errorf("expected ident is %s, but got %s", "a", vv.Token.String())
+	}
+	i, ok := vv.Expr.(IntVal)
+	if !ok {
+		t.Errorf("expected type is IntVal, but got %s", reflect.TypeOf(vv.Expr))
+	}
+	if i.Token.String() != "0" {
+		t.Errorf("expected str is %s, but got %s", "0", i.Token.String())
 	}
 }

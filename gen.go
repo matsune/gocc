@@ -99,6 +99,8 @@ func (gen *Gen) generate(n Node) {
 	switch v := n.(type) {
 	case VarDef:
 		gen.varDef(v)
+	case ArrayDef:
+		gen.arrayDef(v)
 	case FuncDef:
 		gen.funcDef(v)
 	case Expr:
@@ -115,9 +117,13 @@ func (gen *Gen) varDef(n VarDef) {
 		gen.expr(*n.Init)
 	}
 	gen.pos += n.Type.Bytes()
-	gen.add(n.Name, gen.pos, n.Type)
+	gen.add(n.Token.String(), gen.pos, n.Type)
 	gen.emitf("\t%s\t$%d, %s\n", SUBQ, n.Type.Bytes(), RSP)
 	gen.emitf("\t%s\t%s, %d(%s)\n", mov(n.Type), registerA(n.Type), -gen.pos, RBP)
+}
+
+func (gen *Gen) arrayDef(a ArrayDef) {
+	panic("gen.arrayDef")
 }
 
 func (gen *Gen) argDef(a FuncArg) {

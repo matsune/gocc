@@ -13,6 +13,7 @@ const (
 	AST_CondExpr
 	AST_UnaryExpr
 	AST_AssignExpr
+	AST_SubscriptExpr
 	AST_FuncCall
 	AST_IntVal
 	AST_CharVal
@@ -86,15 +87,15 @@ type (
 	}
 
 	VarDef struct {
-		Type CType
-		Name string
-		Init *Expr
+		Type  CType
+		Token *Token
+		Init  *Expr
 	}
 
 	ArrayDef struct {
 		Type      CType
-		Name      string
-		Subscript []Expr
+		Token     *Token
+		Subscript *Expr
 		Init      *Expr
 	}
 
@@ -138,6 +139,12 @@ type (
 		L  Expr
 		Op *Token
 		R  Expr
+	}
+
+	// a[0], b[10]
+	SubscriptExpr struct {
+		Token *Token
+		Expr  Expr
 	}
 
 	IntVal struct {
@@ -184,36 +191,38 @@ type (
 	}
 )
 
-func (VarDef) Kind() Kind     { return AST_VarDef }
-func (ArrayDef) Kind() Kind   { return AST_ArrayDef }
-func (FuncDef) Kind() Kind    { return AST_FuncDef }
-func (FuncArg) Kind() Kind    { return AST_FuncArg }
-func (Ident) Kind() Kind      { return AST_Ident }
-func (BinaryExpr) Kind() Kind { return AST_BinaryExpr }
-func (CondExpr) Kind() Kind   { return AST_CondExpr }
-func (UnaryExpr) Kind() Kind  { return AST_UnaryExpr }
-func (AssignExpr) Kind() Kind { return AST_AssignExpr }
-func (FuncCall) Kind() Kind   { return AST_FuncCall }
-func (IntVal) Kind() Kind     { return AST_IntVal }
-func (CharVal) Kind() Kind    { return AST_CharVal }
-func (PointerVal) Kind() Kind { return AST_PointerVal }
-func (AddressVal) Kind() Kind { return AST_AddressVal }
-func (ArrayInit) Kind() Kind  { return AST_ArrayInit }
-func (BlockStmt) Kind() Kind  { return AST_BlockStmt }
-func (ReturnStmt) Kind() Kind { return AST_ReturnStmt }
-func (ExprStmt) Kind() Kind   { return AST_ExprStmt }
+func (VarDef) Kind() Kind        { return AST_VarDef }
+func (ArrayDef) Kind() Kind      { return AST_ArrayDef }
+func (FuncDef) Kind() Kind       { return AST_FuncDef }
+func (FuncArg) Kind() Kind       { return AST_FuncArg }
+func (Ident) Kind() Kind         { return AST_Ident }
+func (BinaryExpr) Kind() Kind    { return AST_BinaryExpr }
+func (CondExpr) Kind() Kind      { return AST_CondExpr }
+func (UnaryExpr) Kind() Kind     { return AST_UnaryExpr }
+func (AssignExpr) Kind() Kind    { return AST_AssignExpr }
+func (SubscriptExpr) Kind() Kind { return AST_SubscriptExpr }
+func (FuncCall) Kind() Kind      { return AST_FuncCall }
+func (IntVal) Kind() Kind        { return AST_IntVal }
+func (CharVal) Kind() Kind       { return AST_CharVal }
+func (PointerVal) Kind() Kind    { return AST_PointerVal }
+func (AddressVal) Kind() Kind    { return AST_AddressVal }
+func (ArrayInit) Kind() Kind     { return AST_ArrayInit }
+func (BlockStmt) Kind() Kind     { return AST_BlockStmt }
+func (ReturnStmt) Kind() Kind    { return AST_ReturnStmt }
+func (ExprStmt) Kind() Kind      { return AST_ExprStmt }
 
-func (Ident) expr()      {}
-func (BinaryExpr) expr() {}
-func (CondExpr) expr()   {}
-func (UnaryExpr) expr()  {}
-func (AssignExpr) expr() {}
-func (FuncCall) expr()   {}
-func (IntVal) expr()     {}
-func (CharVal) expr()    {}
-func (PointerVal) expr() {}
-func (AddressVal) expr() {}
-func (ArrayInit) expr()  {}
+func (Ident) expr()         {}
+func (BinaryExpr) expr()    {}
+func (CondExpr) expr()      {}
+func (UnaryExpr) expr()     {}
+func (AssignExpr) expr()    {}
+func (SubscriptExpr) expr() {}
+func (FuncCall) expr()      {}
+func (IntVal) expr()        {}
+func (CharVal) expr()       {}
+func (PointerVal) expr()    {}
+func (AddressVal) expr()    {}
+func (ArrayInit) expr()     {}
 
 func (BlockStmt) stmt()  {}
 func (ReturnStmt) stmt() {}

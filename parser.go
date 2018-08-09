@@ -141,16 +141,13 @@ func (p *Parser) readVarDef() Node {
 	t := p.readType()
 
 	p.assert(IDENT)
-	name := string(p.token.Str)
+	tok := p.token
 	p.next()
 
 	var n Node
 	if p.match(LBRACK) {
-		var s []Expr
-		for p.match(LBRACK) {
-			s = append(s, p.readSubscript())
-		}
-		arr := ArrayDef{Type: t, Name: name, Subscript: s}
+
+		arr := ArrayDef{Type: t, Token: tok, Subscript: p.readSubscriptInit()}
 
 		if p.match(ASSIGN) {
 			p.next()
@@ -160,7 +157,7 @@ func (p *Parser) readVarDef() Node {
 		}
 		n = arr
 	} else {
-		v := VarDef{Type: t, Name: name}
+		v := VarDef{Type: t, Token: tok}
 
 		if p.match(ASSIGN) {
 			p.next()
@@ -176,7 +173,8 @@ func (p *Parser) readVarDef() Node {
 	return n
 }
 
-func (p *Parser) readSubscript() Expr {
+// [0] []
+func (p *Parser) readSubscriptInit() *Expr {
 	p.assert(LBRACK)
 	p.next()
 
@@ -190,7 +188,7 @@ func (p *Parser) readSubscript() Expr {
 	p.assert(RBRACK)
 	p.next()
 
-	return e
+	return &e
 }
 
 func (p *Parser) readArrayInit() Expr {
@@ -375,6 +373,8 @@ func (p *Parser) conditionalExpr() Expr {
 		p.next()
 		n := CondExpr{Cond: e, L: L, R: p.conditionalExpr()}
 		return n
+		// } else if i, ok := e.(Ident); ok && p.match(LBRACK) {
+		// 	sc := p.readSubscript()
 	}
 	return e
 }
@@ -587,12 +587,32 @@ func (p *Parser) postfixExpr2(e Expr) Expr {
 	}
 }
 
+// [0] [1]
+func (p *Parser) readSubscriptExpr(t *Token) SubscriptExpr {
+	p.assert(LBRACK)
+	p.next()
+
+	e := p.expr()
+
+	p.assert(RBRACK)
+	p.next()
+
+	se := SubscriptExpr{Token: t, Expr: e}
+	return se
+}
+
 func (p *Parser) primaryExpr() Expr {
 	switch {
 	case p.match(IDENT):
-		n := Ident{Token: p.token}
+		t := p.token
 		p.next()
-		return n
+
+		if p.match(LBRACK) {
+			return p.readSubscriptExpr(t)
+		} else {
+			n := Ident{Token: t}
+			return n
+		}
 	case p.match(INT_CONST):
 		n := IntVal{Token: p.token}
 		p.next()
