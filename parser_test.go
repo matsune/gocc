@@ -1,13 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
 
-func intValExpect(t *testing.T, v IntVal, e string) {
-	if v.Token.String() != e {
-		t.Errorf("expected str is %s, but got %s", e, v.Token.String())
+func intValExpect(t *testing.T, v IntVal, n int) {
+	if v.Num != n {
+		t.Errorf("expected num is %d, but got %d", n, v.Num)
 	}
 }
 
@@ -20,7 +21,7 @@ func TestIntVal(t *testing.T) {
 		t.Errorf("expected type is IntVal")
 		return
 	}
-	intValExpect(t, v, "1")
+	intValExpect(t, v, 1)
 }
 
 func TestBinaryExpr(t *testing.T) {
@@ -61,7 +62,7 @@ func TestBinaryExpr(t *testing.T) {
 		t.Errorf("expected xx type is IntVal")
 		return
 	}
-	intValExpect(t, xx, "1")
+	intValExpect(t, xx, 1)
 
 	// +
 	if x.Op.Kind != ADD {
@@ -81,14 +82,14 @@ func TestBinaryExpr(t *testing.T) {
 		t.Errorf("expected xyx type is IntVal")
 		return
 	}
-	intValExpect(t, xyx, "2")
+	intValExpect(t, xyx, 2)
 
 	xyy, ok := xy.Y.(IntVal)
 	if !ok {
 		t.Errorf("expected xyy type is IntVal")
 		return
 	}
-	intValExpect(t, xyy, "3")
+	intValExpect(t, xyy, 3)
 
 	if xy.Op.Kind != MUL {
 		t.Errorf("expected op is %s", MUL)
@@ -114,14 +115,14 @@ func TestBinaryExpr(t *testing.T) {
 		t.Errorf("expected yxx type is IntVal")
 		return
 	}
-	intValExpect(t, yxx, "4")
+	intValExpect(t, yxx, 4)
 
 	yxy, ok := yx.Y.(IntVal)
 	if !ok {
 		t.Errorf("expected yxy type is IntVal")
 		return
 	}
-	intValExpect(t, yxy, "5")
+	intValExpect(t, yxy, 5)
 
 	if yx.Op.Kind != DIV {
 		t.Errorf("expected op is %s", DIV)
@@ -133,7 +134,7 @@ func TestBinaryExpr(t *testing.T) {
 		t.Errorf("expected yy type is IntVal")
 		return
 	}
-	intValExpect(t, yy, "6")
+	intValExpect(t, yy, 6)
 
 	if y.Op.Kind != ADD {
 		t.Errorf("expected op is %s", ADD)
@@ -180,8 +181,8 @@ func TestReadVarDefWithInit(t *testing.T) {
 	if !ok {
 		t.Errorf("expected type is BinaryExpr, but got %s", reflect.TypeOf(v.Init))
 	}
-	intValExpect(t, b.X.(IntVal), "3")
-	intValExpect(t, b.Y.(IntVal), "4")
+	intValExpect(t, b.X.(IntVal), 3)
+	intValExpect(t, b.Y.(IntVal), 4)
 }
 
 func TestReadFuncDef(t *testing.T) {
@@ -313,8 +314,8 @@ func TestParseArray(t *testing.T) {
 	if !ok {
 		t.Errorf("expected type is IntVal, but got %s", reflect.TypeOf(v.Subscript))
 	}
-	if vv.Token.String() != "4" {
-		t.Errorf("expected string is 4, but got %s", vv.Token.String())
+	if vv.Num != 4 {
+		t.Errorf("expected string is 4, but got %d", vv.Num)
 	}
 	if v.Init != nil {
 		t.Errorf("expected init is nil")
@@ -322,16 +323,16 @@ func TestParseArray(t *testing.T) {
 }
 
 func TestParseArrayInit(t *testing.T) {
-	p := NewParser([]byte("int a[4] = {0, 1, 2, 3};"))
+	p := NewParser([]byte("int a[] = {0, 1, 2, 3};"))
 	e := p.readVarDef()
 	v, ok := e.(ArrayDef)
 	if !ok {
 		t.Errorf("expected type is ArrayDef, but got %s", reflect.TypeOf(e))
 	}
-	i, ok := (*v.Init).(ArrayInit)
-	if !ok {
-		t.Errorf("expected type is ArrayInit, but got %s", reflect.TypeOf(*v.Init))
+	if v.Subscript != nil {
+		t.Errorf("expected subscript is nil")
 	}
+	i := *v.Init
 	if len(i.List) != 4 {
 		t.Errorf("expected count of elements is %d, but got %d", 4, len(i.List))
 	}
@@ -355,7 +356,14 @@ func TestReturnSubscript(t *testing.T) {
 	if !ok {
 		t.Errorf("expected type is IntVal, but got %s", reflect.TypeOf(vv.Expr))
 	}
-	if i.Token.String() != "0" {
-		t.Errorf("expected str is %s, but got %s", "0", i.Token.String())
+	if i.Num != 0 {
+		t.Errorf("expected str is %d, but got %d", 0, i.Num)
 	}
 }
+
+func TestSubscriptAssign(t *testing.T) {
+	p := NewParser([]byte("a[2] = 5;"))
+	e := p.expr()
+	fmt.Println(e)
+}
+

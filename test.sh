@@ -80,6 +80,8 @@ test 17 118
 test 18 3
 test 19 20
 
+test 20 16
+
 echo "Finished test."
 FAILED=$(( COUNT - PASSED ))
 echo "${GREEN}PASSED: ${PASSED}\t${RED}FAILED: ${FAILED}${CLEAR}"

@@ -48,7 +48,7 @@ type Operand interface {
 }
 
 func (r Register) Str() string { return r.String() }
-func (i IntVal) Str() string   { return "$" + string(i.Token.Str) }
+func (i IntVal) Str() string   { return fmt.Sprintf("$%d", i.Num) }
 func (c CharVal) Str() string  { return "$" + fmt.Sprintf("%d", c.Token.Str[0]) }
 func (i Ident) Str() string    { return "_" + i.Token.String() }
 
@@ -123,7 +123,37 @@ func (gen *Gen) varDef(n VarDef) {
 }
 
 func (gen *Gen) arrayDef(a ArrayDef) {
-	panic("gen.arrayDef")
+	if a.Subscript == nil {
+		// int a[] = {0, 1}
+		s := len(a.Init.List) * a.Type.Bytes()
+
+		gen.pos += s
+		gen.add(a.Token.String(), gen.pos, a.Type)
+		gen.emitf("\t%s\t$%d, %s\n", SUBQ, s, RSP)
+
+		for idx, v := range a.Init.List {
+			gen.expr(v)
+			gen.emitf("\t%s\t%s, %d(%s)\n", mov(a.Type), registerA(a.Type), a.Type.Bytes()*idx-gen.pos, RBP)
+		}
+	} else {
+		// int a[5]
+		i, ok := (*a.Subscript).(IntVal)
+		if !ok {
+			panic("subscript is not intVal")
+		}
+		s := i.Num * a.Type.Bytes()
+
+		gen.pos += s
+		gen.add(a.Token.String(), gen.pos, a.Type)
+		gen.emitf("\t%s\t$%d, %s\n", SUBQ, s, RSP)
+
+		if a.Init != nil {
+			for idx, v := range a.Init.List {
+				gen.expr(v)
+				gen.emitf("\t%s\t%s, %d(%s)\n", mov(a.Type), registerA(a.Type), a.Type.Bytes()*idx-gen.pos, RBP)
+			}
+		}
+	}
 }
 
 func (gen *Gen) argDef(a FuncArg) {
@@ -191,6 +221,8 @@ func (gen *Gen) expr(e Expr) {
 		gen.addressVal(v)
 	case AssignExpr:
 		gen.assignExpr(v)
+	case SubscriptExpr:
+		gen.subscriptExpr(v)
 	default:
 		panic(fmt.Sprintf("unimplemented expr type: %s", reflect.TypeOf(e)))
 	}
@@ -258,18 +290,39 @@ func (gen *Gen) unaryExpr(e UnaryExpr) {
 func (gen *Gen) assignExpr(e AssignExpr) {
 	gen.expr(e.R)
 
-	if p, ok := e.L.(PointerVal); ok {
-		if col, ok := gen.lookup(p.Token.String()); ok {
+	switch v := e.L.(type) {
+	case PointerVal:
+		if col, ok := gen.lookup(v.Token.String()); ok {
 			gen.emitf("\t%s\t%d(%s), %s\n", mov(col.ty), -col.pos, RBP, registerB(col.ty))
 		} else {
 			panic("ident is not defined")
 		}
 		gen.emitf("\t%s\t%s, (%s)\n", MOVQ, RAX, RBX)
+	case SubscriptExpr:
+		if col, ok := gen.lookup(v.Token.String()); ok {
+			i, ok := v.Expr.(IntVal)
+			if !ok {
+				panic("subscript expr is not intVal")
+			}
+			gen.emitf("\t%s\t%s, %d(%s)\n", mov(col.ty), registerA(col.ty), (i.Num*col.ty.Bytes() - col.pos), RBP)
+		} else {
+			panic("ident is not defined")
+		}
+	default:
+		panic("unimplemented assignExpr L type")
+	}
+}
+
+func (gen *Gen) subscriptExpr(e SubscriptExpr) {
+	if col, ok := gen.lookup(e.Token.String()); ok {
+		i, ok := e.Expr.(IntVal)
+		if !ok {
+			panic("subscript should be intVal")
+		}
+
+		gen.emitf("\t%s\t%d(%s), %s\n", mov(col.ty), (i.Num*col.ty.Bytes() - col.pos), RBP, registerA(col.ty))
 	} else {
-		gen.emit(PUSH, RAX)
-		gen.expr(e.L)
-		gen.emit(POP, RBX)
-		gen.emit(MOVL, EBX, EAX)
+		panic("ident is not defined")
 	}
 }
 

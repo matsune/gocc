@@ -96,7 +96,7 @@ type (
 		Type      CType
 		Token     *Token
 		Subscript *Expr
-		Init      *Expr
+		Init      *ArrayInit
 	}
 
 	FuncDef struct {
@@ -148,7 +148,7 @@ type (
 	}
 
 	IntVal struct {
-		Token *Token
+		Num int
 	}
 
 	CharVal struct {

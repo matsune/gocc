@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 )
 
 type Parser struct {
@@ -147,7 +148,12 @@ func (p *Parser) readVarDef() Node {
 	var n Node
 	if p.match(LBRACK) {
 
-		arr := ArrayDef{Type: t, Token: tok, Subscript: p.readSubscriptInit()}
+		s := p.readSubscriptInit()
+		arr := ArrayDef{Type: t, Token: tok, Subscript: s}
+
+		if s == nil && !p.match(ASSIGN) {
+			panic(fmt.Errorf("definition of variable with array type needs an explicit size or an initializer"))
+		}
 
 		if p.match(ASSIGN) {
 			p.next()
@@ -191,26 +197,23 @@ func (p *Parser) readSubscriptInit() *Expr {
 	return &e
 }
 
-func (p *Parser) readArrayInit() Expr {
-	if p.match(LBRACE) {
-		p.next()
-		n := ArrayInit{}
-		for {
-			e := p.assignExpr()
-			n.List = append(n.List, e)
-			if p.match(RBRACE) {
-				break
-			} else if p.match(COMMA) {
-				p.next()
-			} else {
-				panic("expected } or ,")
-			}
+func (p *Parser) readArrayInit() ArrayInit {
+	p.assert(LBRACE)
+	p.next()
+	n := ArrayInit{}
+	for {
+		e := p.assignExpr()
+		n.List = append(n.List, e)
+		if p.match(RBRACE) {
+			break
+		} else if p.match(COMMA) {
+			p.next()
+		} else {
+			panic("expected } or ,")
 		}
-		p.next()
-		return n
 	}
-	a := p.assignExpr()
-	return a
+	p.next()
+	return n
 }
 
 func (p *Parser) isType() bool {
@@ -373,8 +376,6 @@ func (p *Parser) conditionalExpr() Expr {
 		p.next()
 		n := CondExpr{Cond: e, L: L, R: p.conditionalExpr()}
 		return n
-		// } else if i, ok := e.(Ident); ok && p.match(LBRACK) {
-		// 	sc := p.readSubscript()
 	}
 	return e
 }
@@ -592,7 +593,7 @@ func (p *Parser) readSubscriptExpr(t *Token) SubscriptExpr {
 	p.assert(LBRACK)
 	p.next()
 
-	e := p.expr()
+	e := p.conditionalExpr()
 
 	p.assert(RBRACK)
 	p.next()
@@ -614,7 +615,11 @@ func (p *Parser) primaryExpr() Expr {
 			return n
 		}
 	case p.match(INT_CONST):
-		n := IntVal{Token: p.token}
+		i, err := strconv.Atoi(p.token.String())
+		if err != nil {
+			panic(err)
+		}
+		n := IntVal{Num: i}
 		p.next()
 		return n
 	case p.match(CHAR_CONST):
