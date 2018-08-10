@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"gocc/gocc"
 	"io/ioutil"
 	"os"
 )
@@ -28,15 +29,15 @@ func main() {
 	}
 	defer outFile.Close()
 
-	p := NewParser(source)
-	gen := NewGen()
+	p := gocc.NewParser(source)
+	gen := gocc.NewGen()
 
-	for !p.isEnd() {
-		n := p.parse()
-		gen.generate(n)
+	for !p.IsEnd() {
+		n := p.Parse()
+		gen.Generate(n)
 	}
 
-	if _, err := outFile.WriteString(gen.s); err != nil {
+	if _, err := outFile.WriteString(gen.Str); err != nil {
 		panic(err)
 	}
 }

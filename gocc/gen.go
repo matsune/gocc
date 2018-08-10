@@ -1,4 +1,4 @@
-package main
+package gocc
 
 import (
 	"fmt"
@@ -13,13 +13,13 @@ type Column struct {
 type Map map[string]Column
 
 type Gen struct {
-	s   string
+	Str string
 	pos int
 	m   Map
 }
 
 func NewGen() *Gen {
-	return &Gen{s: "", pos: 0, m: Map{}}
+	return &Gen{Str: "", pos: 0, m: Map{}}
 }
 
 var ARG_COUNT = 6
@@ -66,18 +66,18 @@ func (gen *Gen) lookup(n string) (Column, bool) {
 }
 
 func (gen *Gen) emit(c Opcode, ops ...Operand) {
-	gen.s += "\t" + c.String()
+	gen.Str += "\t" + c.String()
 	for i, v := range ops {
 		if i != 0 {
-			gen.s += ","
+			gen.Str += ","
 		}
-		gen.s += "\t" + v.Str()
+		gen.Str += "\t" + v.Str()
 	}
-	gen.s += "\n"
+	gen.Str += "\n"
 }
 
 func (gen *Gen) emitf(format string, a ...interface{}) {
-	gen.s += fmt.Sprintf(format, a...)
+	gen.Str += fmt.Sprintf(format, a...)
 }
 
 func (gen *Gen) prologue() {
@@ -91,11 +91,11 @@ func (gen *Gen) epilogue() {
 }
 
 func (gen *Gen) emitFuncDef(n string) {
-	gen.s += ".global _" + n + "\n"
-	gen.s += "_" + n + ":\n"
+	gen.Str += ".global _" + n + "\n"
+	gen.Str += "_" + n + ":\n"
 }
 
-func (gen *Gen) generate(n Node) {
+func (gen *Gen) Generate(n Node) {
 	switch v := n.(type) {
 	case VarDef:
 		gen.varDef(v)
@@ -185,7 +185,7 @@ func (gen *Gen) funcDef(v FuncDef) {
 
 	count := -1
 	for i, node := range v.Block.Nodes {
-		gen.generate(node)
+		gen.Generate(node)
 		count = i
 	}
 

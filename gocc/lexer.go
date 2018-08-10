@@ -1,4 +1,4 @@
-package main
+package gocc
 
 type Lexer struct {
 	scanner *Scanner

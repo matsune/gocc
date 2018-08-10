@@ -1,4 +1,4 @@
-package main
+package gocc
 
 import (
 	"fmt"
@@ -120,11 +120,11 @@ func (p *Parser) next() {
 	p.token = p.lexer.Next()
 }
 
-func (p *Parser) isEnd() bool {
+func (p *Parser) IsEnd() bool {
 	return p.match(EOF)
 }
 
-func (p *Parser) parse() Node {
+func (p *Parser) Parse() Node {
 	if p.isFuncDef() {
 		return p.readFuncDef()
 	} else if p.isType() {

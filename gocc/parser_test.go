@@ -1,4 +1,4 @@
-package main
+package gocc
 
 import (
 	"fmt"
@@ -257,9 +257,9 @@ func TestFuncCall(t *testing.T) {
 
 func TestFuncCall2(t *testing.T) {
 	p := NewParser([]byte("int main() { return a(); }"))
-	f, ok := p.parse().(FuncDef)
+	f, ok := p.Parse().(FuncDef)
 	if !ok {
-		t.Errorf("expected type is FuncDef, but got %s", reflect.TypeOf(p.parse()))
+		t.Errorf("expected type is FuncDef, but got %s", reflect.TypeOf(p.Parse()))
 	}
 	if len(f.Block.Nodes) != 1 {
 		t.Errorf("expected nodes count is %d, but got %d", 1, len(f.Block.Nodes))
@@ -367,3 +367,9 @@ func TestSubscriptAssign(t *testing.T) {
 	fmt.Println(e)
 }
 
+//
+// func TestArrayNoSize(t *testing.T) {
+// 	p := NewParser([]byte("int a[];"))
+// 	e := p.readVarDef()
+// 	fmt.Println(e)
+// }

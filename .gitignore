@@ -1,5 +1,5 @@
 *.out
 *.s
-gocc
 testfile
 asm/
+app

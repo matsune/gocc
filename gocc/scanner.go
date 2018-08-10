@@ -1,4 +1,4 @@
-package main
+package gocc
 
 type Position struct {
 	Line   int
