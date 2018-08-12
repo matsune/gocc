@@ -1,29 +1,34 @@
-package gocc
+package ast
+
+import (
+	"fmt"
+	"gocc/token"
+)
 
 type Kind int
 
 const (
-	AST_VarDef Kind = iota
-	AST_ArrayDef
-	AST_FuncDef
-	AST_FuncArg
-	AST_Ident
+	VAR_DEF Kind = iota
+	ARRAY_DEF
+	FUNC_DEF
+	FUNC_ARG
+	IDENT
 	// expr
-	AST_BinaryExpr
-	AST_CondExpr
-	AST_UnaryExpr
-	AST_AssignExpr
-	AST_SubscriptExpr
-	AST_FuncCall
-	AST_IntVal
-	AST_CharVal
-	AST_PointerVal
-	AST_AddressVal
-	AST_ArrayInit
+	BINARY_EXPR
+	COND_EXPR
+	UNARY_EXPR
+	ASSIGN_EXPR
+	SUBSCRIPT_EXPR
+	FUNC_CALL
+	INT_VAL
+	CHAR_VAL
+	PTR_VAL
+	ADDRESS_VAL
+	ARRAY_INIT
 	// stmt
-	AST_BlockStmt
-	AST_ReturnStmt
-	AST_ExprStmt
+	BLOCK_STMT
+	RETURN_STMT
+	EXPR_STMT
 )
 
 type CType int
@@ -83,18 +88,18 @@ type (
 
 type (
 	Ident struct {
-		Token *Token
+		Token *token.Token
 	}
 
 	VarDef struct {
 		Type  CType
-		Token *Token
+		Token *token.Token
 		Init  *Expr
 	}
 
 	ArrayDef struct {
 		Type      CType
-		Token     *Token
+		Token     *token.Token
 		Subscript *Expr
 		Init      *ArrayInit
 	}
@@ -108,7 +113,7 @@ type (
 
 	FuncArg struct {
 		Type CType
-		Name *Token
+		Name *token.Token
 	}
 )
 
@@ -120,7 +125,7 @@ type (
 
 	BinaryExpr struct {
 		X  Expr
-		Op *Token
+		Op *token.Token
 		Y  Expr
 	}
 
@@ -131,19 +136,19 @@ type (
 	}
 
 	UnaryExpr struct {
-		Op   *Token
+		Op   *token.Token
 		Expr Expr
 	}
 
 	AssignExpr struct {
 		L  Expr
-		Op *Token
+		Op *token.Token
 		R  Expr
 	}
 
 	// a[0], b[10]
 	SubscriptExpr struct {
-		Token *Token
+		Token *token.Token
 		Expr  Expr
 	}
 
@@ -152,7 +157,7 @@ type (
 	}
 
 	CharVal struct {
-		Token *Token
+		Token *token.Token
 	}
 
 	FuncCall struct {
@@ -160,11 +165,11 @@ type (
 		Args  []Expr
 	}
 
-	PointerVal struct {
-		Token *Token
+	PtrVal struct {
+		Token *token.Token
 	}
 	AddressVal struct {
-		Token *Token
+		Token *token.Token
 	}
 
 	ArrayInit struct {
@@ -191,25 +196,25 @@ type (
 	}
 )
 
-func (VarDef) Kind() Kind        { return AST_VarDef }
-func (ArrayDef) Kind() Kind      { return AST_ArrayDef }
-func (FuncDef) Kind() Kind       { return AST_FuncDef }
-func (FuncArg) Kind() Kind       { return AST_FuncArg }
-func (Ident) Kind() Kind         { return AST_Ident }
-func (BinaryExpr) Kind() Kind    { return AST_BinaryExpr }
-func (CondExpr) Kind() Kind      { return AST_CondExpr }
-func (UnaryExpr) Kind() Kind     { return AST_UnaryExpr }
-func (AssignExpr) Kind() Kind    { return AST_AssignExpr }
-func (SubscriptExpr) Kind() Kind { return AST_SubscriptExpr }
-func (FuncCall) Kind() Kind      { return AST_FuncCall }
-func (IntVal) Kind() Kind        { return AST_IntVal }
-func (CharVal) Kind() Kind       { return AST_CharVal }
-func (PointerVal) Kind() Kind    { return AST_PointerVal }
-func (AddressVal) Kind() Kind    { return AST_AddressVal }
-func (ArrayInit) Kind() Kind     { return AST_ArrayInit }
-func (BlockStmt) Kind() Kind     { return AST_BlockStmt }
-func (ReturnStmt) Kind() Kind    { return AST_ReturnStmt }
-func (ExprStmt) Kind() Kind      { return AST_ExprStmt }
+func (VarDef) Kind() Kind        { return VAR_DEF }
+func (ArrayDef) Kind() Kind      { return ARRAY_DEF }
+func (FuncDef) Kind() Kind       { return FUNC_DEF }
+func (FuncArg) Kind() Kind       { return FUNC_ARG }
+func (Ident) Kind() Kind         { return IDENT }
+func (BinaryExpr) Kind() Kind    { return BINARY_EXPR }
+func (CondExpr) Kind() Kind      { return COND_EXPR }
+func (UnaryExpr) Kind() Kind     { return UNARY_EXPR }
+func (AssignExpr) Kind() Kind    { return ASSIGN_EXPR }
+func (SubscriptExpr) Kind() Kind { return SUBSCRIPT_EXPR }
+func (FuncCall) Kind() Kind      { return FUNC_CALL }
+func (IntVal) Kind() Kind        { return INT_VAL }
+func (CharVal) Kind() Kind       { return CHAR_VAL }
+func (PtrVal) Kind() Kind        { return PTR_VAL }
+func (AddressVal) Kind() Kind    { return ADDRESS_VAL }
+func (ArrayInit) Kind() Kind     { return ARRAY_INIT }
+func (BlockStmt) Kind() Kind     { return BLOCK_STMT }
+func (ReturnStmt) Kind() Kind    { return RETURN_STMT }
+func (ExprStmt) Kind() Kind      { return EXPR_STMT }
 
 func (Ident) expr()         {}
 func (BinaryExpr) expr()    {}
@@ -220,10 +225,14 @@ func (SubscriptExpr) expr() {}
 func (FuncCall) expr()      {}
 func (IntVal) expr()        {}
 func (CharVal) expr()       {}
-func (PointerVal) expr()    {}
+func (PtrVal) expr()        {}
 func (AddressVal) expr()    {}
 func (ArrayInit) expr()     {}
 
 func (BlockStmt) stmt()  {}
 func (ReturnStmt) stmt() {}
 func (ExprStmt) stmt()   {}
+
+func (i IntVal) Str() string  { return fmt.Sprintf("$%d", i.Num) }
+func (c CharVal) Str() string { return "$" + fmt.Sprintf("%d", c.Token.Str[0]) }
+func (i Ident) Str() string   { return "_" + i.Token.String() }

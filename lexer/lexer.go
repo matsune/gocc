@@ -1,4 +1,6 @@
-package gocc
+package lexer
+
+import "gocc/token"
 
 type Lexer struct {
 	scanner *Scanner
@@ -8,14 +10,14 @@ func NewLexer(source []byte) *Lexer {
 	return &Lexer{scanner: NewScanner(source)}
 }
 
-func (l *Lexer) Pos() Position {
+func (l *Lexer) Pos() token.Position {
 	return l.scanner.Pos()
 }
 
-func (l *Lexer) Next() *Token {
-	t := NewToken()
+func (l *Lexer) Next() *token.Token {
+	t := token.NewToken()
 	if l.scanner.IsEnd() {
-		t.Kind = EOF
+		t.Kind = token.EOF
 		t.Pos = l.scanner.Pos()
 		return t
 	}
@@ -40,16 +42,16 @@ func (l *Lexer) Next() *Token {
 	} else if isPeriod(c) {
 		l.parsePeriod(t)
 	} else {
-		t.Kind = EOF
+		t.Kind = token.EOF
 	}
-	if t.Kind == COMMENT {
+	if t.Kind == token.COMMENT {
 		return l.Next()
 	}
 	t.Pos = pos
 	return t
 }
 
-func (l *Lexer) Reset(pos Position) {
+func (l *Lexer) Reset(pos token.Position) {
 	l.scanner.Reset(pos)
 }
 
@@ -61,7 +63,7 @@ func (l *Lexer) consume() (byte, bool) {
 	return l.scanner.Get(), true
 }
 
-func (l *Lexer) parseAlpha(t *Token) {
+func (l *Lexer) parseAlpha(t *token.Token) {
 	var s []byte
 	c := l.scanner.Get()
 	ok := false
@@ -76,17 +78,17 @@ func (l *Lexer) parseAlpha(t *Token) {
 	t.Kind = checkKeyword(string(t.Str))
 }
 
-func checkKeyword(s string) TokenKind {
-	if v, ok := TypeKeys[s]; ok {
+func checkKeyword(s string) token.TokenKind {
+	if v, ok := token.TypeKeys[s]; ok {
 		return v
 	}
-	if v, ok := Keywords[s]; ok {
+	if v, ok := token.Keywords[s]; ok {
 		return v
 	}
-	return IDENT
+	return token.IDENT
 }
 
-func (l *Lexer) parseNumber(t *Token) {
+func (l *Lexer) parseNumber(t *token.Token) {
 	var s []byte
 	c := l.scanner.Get()
 	var ok bool
@@ -97,7 +99,7 @@ func (l *Lexer) parseNumber(t *Token) {
 		}
 	}
 	t.Str = s
-	t.Kind = INT_CONST
+	t.Kind = token.INT_CONST
 }
 
 func (l *Lexer) skipSpace() byte {
@@ -127,18 +129,18 @@ func isDigit(c byte) bool {
 	return ('0' <= c && c <= '9')
 }
 
-func checkSingleToken(c byte) (TokenKind, bool) {
-	if v, ok := SingleTokens[c]; ok {
+func checkSingleToken(c byte) (token.TokenKind, bool) {
+	if v, ok := token.SingleTokens[c]; ok {
 		return v, ok
 	}
-	return EOF, false
+	return token.EOF, false
 }
 
 func isSingleQuote(c byte) bool {
 	return c == '\''
 }
 
-func (l *Lexer) parseChar(t *Token) {
+func (l *Lexer) parseChar(t *token.Token) {
 	var c byte
 	var ok bool
 	if c, ok = l.consume(); !ok {
@@ -153,7 +155,7 @@ func (l *Lexer) parseChar(t *Token) {
 	if !isSingleQuote(c) {
 		panic("parseChar")
 	}
-	t.Kind = CHAR_CONST
+	t.Kind = token.CHAR_CONST
 	if c, ok = l.consume(); !ok {
 		return
 	}
@@ -163,9 +165,9 @@ func isDoubleQuote(c byte) bool {
 	return c == '"'
 }
 
-func (l *Lexer) parseString(t *Token) {
+func (l *Lexer) parseString(t *token.Token) {
 	t.Str = l.readString()
-	t.Kind = STRING_CONST
+	t.Kind = token.STRING_CONST
 }
 
 func (l *Lexer) readString() []byte {
@@ -198,7 +200,7 @@ func isOperator(c byte) bool {
 	return c == '+' || c == '-' || c == '*' || c == '/' || c == '%' || c == '=' || c == '<' || c == '>' || c == '|' || c == '&' || c == '!' || c == '^'
 }
 
-func (l *Lexer) readAND(t *Token) {
+func (l *Lexer) readAND(t *token.Token) {
 	var c byte
 	var ok bool
 	if c, ok = l.consume(); !ok {
@@ -207,19 +209,19 @@ func (l *Lexer) readAND(t *Token) {
 
 	switch c {
 	case '&': // &&
-		t.Kind = LAND
+		t.Kind = token.LAND
 		t.Str = append(t.Str, c)
 		l.scanner.Step()
 	case '=': // &=
-		t.Kind = AND_ASSIGN
+		t.Kind = token.AND_ASSIGN
 		t.Str = append(t.Str, c)
 		l.scanner.Step()
 	default: // &
-		t.Kind = AND
+		t.Kind = token.AND
 	}
 }
 
-func (l *Lexer) readOR(t *Token) {
+func (l *Lexer) readOR(t *token.Token) {
 	var c byte
 	var ok bool
 	if c, ok = l.consume(); !ok {
@@ -228,19 +230,19 @@ func (l *Lexer) readOR(t *Token) {
 
 	switch c {
 	case '|': // ||
-		t.Kind = LOR
+		t.Kind = token.LOR
 		t.Str = append(t.Str, c)
 		l.scanner.Step()
 	case '=': // |=
-		t.Kind = OR_ASSIGN
+		t.Kind = token.OR_ASSIGN
 		t.Str = append(t.Str, c)
 		l.scanner.Step()
 	default: // |
-		t.Kind = OR
+		t.Kind = token.OR
 	}
 }
 
-func (l *Lexer) readDIV(t *Token) {
+func (l *Lexer) readDIV(t *token.Token) {
 	var c byte
 	var ok bool
 
@@ -257,7 +259,7 @@ func (l *Lexer) readDIV(t *Token) {
 				break
 			}
 		}
-		t.Kind = COMMENT
+		t.Kind = token.COMMENT
 	case '*': // /* comment */
 		t.Str = append(t.Str, c)
 		l.scanner.Step()
@@ -277,18 +279,18 @@ func (l *Lexer) readDIV(t *Token) {
 		}
 		t.Str = append(t.Str, c)
 
-		t.Kind = COMMENT
+		t.Kind = token.COMMENT
 		l.scanner.Step()
 	case '=': // /=
-		t.Kind = DIV_ASSIGN
+		t.Kind = token.DIV_ASSIGN
 		t.Str = append(t.Str, c)
 		l.scanner.Step()
 	default: // /
-		t.Kind = DIV
+		t.Kind = token.DIV
 	}
 }
 
-func (l *Lexer) readLShift(t *Token) {
+func (l *Lexer) readLShift(t *token.Token) {
 	var c byte
 	var ok bool
 	if c, ok = l.consume(); !ok {
@@ -302,25 +304,25 @@ func (l *Lexer) readLShift(t *Token) {
 		}
 		if c == '=' {
 			t.Str = append(t.Str, c)
-			t.Kind = LEFT_ASSIGN
+			t.Kind = token.LEFT_ASSIGN
 			if c, ok = l.consume(); !ok {
 				return
 			}
 		} else {
-			t.Kind = LSHIFT
+			t.Kind = token.LSHIFT
 		}
 	case '=':
-		t.Kind = LE
+		t.Kind = token.LE
 		t.Str = append(t.Str, c)
 		if c, ok = l.consume(); !ok {
 			return
 		}
 	default: // <
-		t.Kind = LT
+		t.Kind = token.LT
 	}
 }
 
-func (l *Lexer) readRShift(t *Token) {
+func (l *Lexer) readRShift(t *token.Token) {
 	var c byte
 	var ok bool
 	if c, ok = l.consume(); !ok {
@@ -334,25 +336,25 @@ func (l *Lexer) readRShift(t *Token) {
 		}
 		if c == '=' {
 			t.Str = append(t.Str, c)
-			t.Kind = RIGHT_ASSIGN
+			t.Kind = token.RIGHT_ASSIGN
 			if c, ok = l.consume(); !ok {
 				return
 			}
 		} else {
-			t.Kind = RSHIFT
+			t.Kind = token.RSHIFT
 		}
 	case '=':
-		t.Kind = GE
+		t.Kind = token.GE
 		t.Str = append(t.Str, c)
 		if c, ok = l.consume(); !ok {
 			return
 		}
 	default:
-		t.Kind = GT
+		t.Kind = token.GT
 	}
 }
 
-func (l *Lexer) readADD(t *Token) {
+func (l *Lexer) readADD(t *token.Token) {
 	var c byte
 	var ok bool
 	if c, ok = l.consume(); !ok {
@@ -360,23 +362,23 @@ func (l *Lexer) readADD(t *Token) {
 	}
 	switch c {
 	case '+':
-		t.Kind = INC
+		t.Kind = token.INC
 		t.Str = append(t.Str, c)
 		if c, ok = l.consume(); !ok {
 			return
 		}
 	case '=':
-		t.Kind = ADD_ASSIGN
+		t.Kind = token.ADD_ASSIGN
 		t.Str = append(t.Str, c)
 		if c, ok = l.consume(); !ok {
 			return
 		}
 	default:
-		t.Kind = ADD
+		t.Kind = token.ADD
 	}
 }
 
-func (l *Lexer) readSUB(t *Token) {
+func (l *Lexer) readSUB(t *token.Token) {
 	var c byte
 	var ok bool
 	if c, ok = l.consume(); !ok {
@@ -384,29 +386,29 @@ func (l *Lexer) readSUB(t *Token) {
 	}
 	switch c {
 	case '-':
-		t.Kind = DEC
+		t.Kind = token.DEC
 		t.Str = append(t.Str, c)
 		if c, ok = l.consume(); !ok {
 			return
 		}
 	case '=':
-		t.Kind = SUB_ASSIGN
+		t.Kind = token.SUB_ASSIGN
 		t.Str = append(t.Str, c)
 		if c, ok = l.consume(); !ok {
 			return
 		}
 	case '>':
-		t.Kind = ARROW
+		t.Kind = token.ARROW
 		t.Str = append(t.Str, c)
 		if c, ok = l.consume(); !ok {
 			return
 		}
 	default:
-		t.Kind = SUB
+		t.Kind = token.SUB
 	}
 }
 
-func (l *Lexer) parseOperator(t *Token) {
+func (l *Lexer) parseOperator(t *token.Token) {
 	t.Str = append(t.Str, l.scanner.Get())
 
 	switch l.scanner.Get() {
@@ -432,15 +434,15 @@ func (l *Lexer) parseOperator(t *Token) {
 		if c, ok = l.consume(); !ok {
 			switch prevC {
 			case '!':
-				t.Kind = NOT
+				t.Kind = token.NOT
 			case '=':
-				t.Kind = ASSIGN
+				t.Kind = token.ASSIGN
 			case '*':
-				t.Kind = MUL
+				t.Kind = token.MUL
 			case '%':
-				t.Kind = REM
+				t.Kind = token.REM
 			case '^':
-				t.Kind = XOR
+				t.Kind = token.XOR
 			default:
 				break
 			}
@@ -450,15 +452,15 @@ func (l *Lexer) parseOperator(t *Token) {
 		if c == '=' {
 			switch prevC {
 			case '!':
-				t.Kind = NE
+				t.Kind = token.NE
 			case '=':
-				t.Kind = EQ
+				t.Kind = token.EQ
 			case '*':
-				t.Kind = MUL_ASSIGN
+				t.Kind = token.MUL_ASSIGN
 			case '%':
-				t.Kind = REM_ASSIGN
+				t.Kind = token.REM_ASSIGN
 			case '^':
-				t.Kind = XOR_ASSIGN
+				t.Kind = token.XOR_ASSIGN
 			default:
 				break
 			}
@@ -469,15 +471,15 @@ func (l *Lexer) parseOperator(t *Token) {
 		} else {
 			switch prevC {
 			case '!':
-				t.Kind = NOT
+				t.Kind = token.NOT
 			case '=':
-				t.Kind = ASSIGN
+				t.Kind = token.ASSIGN
 			case '*':
-				t.Kind = MUL
+				t.Kind = token.MUL
 			case '%':
-				t.Kind = REM
+				t.Kind = token.REM
 			case '^':
-				t.Kind = XOR
+				t.Kind = token.XOR
 			default:
 				break
 			}
@@ -489,7 +491,7 @@ func isPeriod(c byte) bool {
 	return c == '.'
 }
 
-func (l *Lexer) parsePeriod(t *Token) {
+func (l *Lexer) parsePeriod(t *token.Token) {
 	c := l.scanner.Get()
 	ok := false
 
@@ -511,12 +513,12 @@ func (l *Lexer) parsePeriod(t *Token) {
 		s = append(s, c)
 		l.scanner.Step()
 		t.Str = s
-		t.Kind = ELLIPSIS
+		t.Kind = token.ELLIPSIS
 	} else if isDigit(c) {
 		//  - TODO:
 		panic("unimplemented parsePeriod")
 	} else {
 		t.Str = s
-		t.Kind = PERIOD
+		t.Kind = token.PERIOD
 	}
 }

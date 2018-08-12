@@ -1,6 +1,9 @@
-package gocc
+package lexer
 
-import "testing"
+import (
+	"gocc/token"
+	"testing"
+)
 
 func getExpect(t *testing.T, s *Scanner, c byte) {
 	if s.Get() != c {
@@ -66,6 +69,6 @@ cde`
 	s.Step()
 	isEndExpect(t, s, true)
 
-	s.Reset(Position{Line: 1, Column: 1, Offset: 0})
+	s.Reset(token.Position{Line: 1, Column: 1, Offset: 0})
 	getExpect(t, s, 'a')
 }

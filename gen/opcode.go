@@ -1,4 +1,6 @@
-package gocc
+package gen
+
+import "gocc/ast"
 
 type Opcode int
 
@@ -22,7 +24,7 @@ const (
 	RET
 )
 
-func mov(t CType) Opcode {
+func mov(t ast.CType) Opcode {
 	switch t.Bytes() {
 	case 1:
 		return MOVB

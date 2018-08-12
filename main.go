@@ -3,7 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"gocc/gocc"
+	"gocc/gen"
+	"gocc/parser"
 	"io/ioutil"
 	"os"
 )
@@ -29,8 +30,8 @@ func main() {
 	}
 	defer outFile.Close()
 
-	p := gocc.NewParser(source)
-	gen := gocc.NewGen()
+	p := parser.NewParser(source)
+	gen := gen.NewGen()
 
 	for !p.IsEnd() {
 		n := p.Parse()

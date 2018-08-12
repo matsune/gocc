@@ -1,4 +1,6 @@
-package gocc
+package gen
+
+import "gocc/ast"
 
 type Register int
 
@@ -51,7 +53,7 @@ const (
 	RSP
 )
 
-func registerA(t CType) Register {
+func registerA(t ast.CType) Register {
 	switch t.Bytes() {
 	case 1:
 		return AL
@@ -64,7 +66,7 @@ func registerA(t CType) Register {
 	}
 }
 
-func registerB(t CType) Register {
+func registerB(t ast.CType) Register {
 	switch t.Bytes() {
 	case 1:
 		return BL
@@ -77,7 +79,7 @@ func registerB(t CType) Register {
 	}
 }
 
-func registerC(t CType) Register {
+func registerC(t ast.CType) Register {
 	switch t.Bytes() {
 	case 1:
 		return CL
@@ -90,7 +92,7 @@ func registerC(t CType) Register {
 	}
 }
 
-func registerD(t CType) Register {
+func registerD(t ast.CType) Register {
 	switch t.Bytes() {
 	case 1:
 		return DL
@@ -103,7 +105,7 @@ func registerD(t CType) Register {
 	}
 }
 
-func registerDI(t CType) Register {
+func registerDI(t ast.CType) Register {
 	switch t.Bytes() {
 	case 1:
 		return DIL
@@ -116,7 +118,7 @@ func registerDI(t CType) Register {
 	}
 }
 
-func registerSI(t CType) Register {
+func registerSI(t ast.CType) Register {
 	switch t.Bytes() {
 	case 1:
 		return SIL
@@ -129,7 +131,7 @@ func registerSI(t CType) Register {
 	}
 }
 
-func registerR8(t CType) Register {
+func registerR8(t ast.CType) Register {
 	switch t.Bytes() {
 	case 1:
 		return R8B
@@ -142,7 +144,7 @@ func registerR8(t CType) Register {
 	}
 }
 
-func registerR9(t CType) Register {
+func registerR9(t ast.CType) Register {
 	switch t.Bytes() {
 	case 1:
 		return R9B

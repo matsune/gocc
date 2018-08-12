@@ -1,6 +1,7 @@
-package gocc
+package lexer
 
 import (
+	. "gocc/token"
 	"testing"
 )
 

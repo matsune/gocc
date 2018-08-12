@@ -1,18 +1,20 @@
-package gocc
+package parser
+
+import "gocc/token"
 
 type Stack struct {
-	ts    []Token
-	poss  []Position
+	ts    []token.Token
+	poss  []token.Position
 	count int
 }
 
-func (s *Stack) push(t Token, pos Position) {
+func (s *Stack) push(t token.Token, pos token.Position) {
 	s.ts = append(s.ts, t)
 	s.poss = append(s.poss, pos)
 	s.count++
 }
 
-func (s *Stack) pop() (*Token, Position) {
+func (s *Stack) pop() (*token.Token, token.Position) {
 	s.count--
 	t, p := &s.ts[s.count], s.poss[s.count]
 	s.remove(s.count)
@@ -20,14 +22,14 @@ func (s *Stack) pop() (*Token, Position) {
 }
 
 func (s *Stack) remove(at int) {
-	resT := []Token{}
+	resT := []token.Token{}
 
 	for i, v := range s.ts {
 		if i != at {
 			resT = append(resT, v)
 		}
 	}
-	resP := []Position{}
+	resP := []token.Position{}
 	for i, v := range s.poss {
 		if i != at {
 			resP = append(resP, v)

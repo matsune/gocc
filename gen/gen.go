@@ -1,14 +1,16 @@
-package gocc
+package gen
 
 import (
 	"fmt"
+	"gocc/ast"
+	"gocc/token"
 	"reflect"
 )
 
 // [key: var name, value: offset from ebp]
 type Column struct {
 	pos int
-	ty  CType
+	ty  ast.CType
 }
 type Map map[string]Column
 
@@ -24,7 +26,7 @@ func NewGen() *Gen {
 
 var ARG_COUNT = 6
 
-func argsRegister(i int, t CType) Register {
+func argsRegister(i int, t ast.CType) Register {
 	switch i {
 	case 0:
 		return registerDI(t)
@@ -48,11 +50,8 @@ type Operand interface {
 }
 
 func (r Register) Str() string { return r.String() }
-func (i IntVal) Str() string   { return fmt.Sprintf("$%d", i.Num) }
-func (c CharVal) Str() string  { return "$" + fmt.Sprintf("%d", c.Token.Str[0]) }
-func (i Ident) Str() string    { return "_" + i.Token.String() }
 
-func (gen *Gen) add(n string, p int, ty CType) {
+func (gen *Gen) add(n string, p int, ty ast.CType) {
 	gen.m[n] = Column{p, ty}
 }
 
@@ -95,24 +94,24 @@ func (gen *Gen) emitFuncDef(n string) {
 	gen.Str += "_" + n + ":\n"
 }
 
-func (gen *Gen) Generate(n Node) {
+func (gen *Gen) Generate(n ast.Node) {
 	switch v := n.(type) {
-	case VarDef:
+	case ast.VarDef:
 		gen.varDef(v)
-	case ArrayDef:
+	case ast.ArrayDef:
 		gen.arrayDef(v)
-	case FuncDef:
+	case ast.FuncDef:
 		gen.funcDef(v)
-	case Expr:
+	case ast.Expr:
 		gen.expr(v)
-	case Stmt:
+	case ast.Stmt:
 		gen.stmt(v)
 	default:
 		panic("unimplemented")
 	}
 }
 
-func (gen *Gen) varDef(n VarDef) {
+func (gen *Gen) varDef(n ast.VarDef) {
 	if n.Init != nil {
 		gen.expr(*n.Init)
 	}
@@ -122,7 +121,7 @@ func (gen *Gen) varDef(n VarDef) {
 	gen.emitf("\t%s\t%s, %d(%s)\n", mov(n.Type), registerA(n.Type), -gen.pos, RBP)
 }
 
-func (gen *Gen) arrayDef(a ArrayDef) {
+func (gen *Gen) arrayDef(a ast.ArrayDef) {
 	if a.Subscript == nil {
 		// int a[] = {0, 1}
 		s := len(a.Init.List) * a.Type.Bytes()
@@ -137,7 +136,7 @@ func (gen *Gen) arrayDef(a ArrayDef) {
 		}
 	} else {
 		// int a[5]
-		i, ok := (*a.Subscript).(IntVal)
+		i, ok := (*a.Subscript).(ast.IntVal)
 		if !ok {
 			panic("subscript is not intVal")
 		}
@@ -156,13 +155,13 @@ func (gen *Gen) arrayDef(a ArrayDef) {
 	}
 }
 
-func (gen *Gen) argDef(a FuncArg) {
+func (gen *Gen) argDef(a ast.FuncArg) {
 	gen.pos += a.Type.Bytes()
 	gen.add(a.Name.String(), gen.pos, a.Type)
 	gen.emitf("\t%s\t$%d, %s\n", SUBQ, a.Type.Bytes(), RSP)
 }
 
-func (gen *Gen) funcDef(v FuncDef) {
+func (gen *Gen) funcDef(v ast.FuncDef) {
 	gen.pos = 0
 	gen.m = Map{}
 
@@ -190,54 +189,54 @@ func (gen *Gen) funcDef(v FuncDef) {
 	}
 
 	if count == -1 ||
-		(count > -1 && v.Block.Nodes[count].Kind() != AST_ReturnStmt) {
+		(count > -1 && v.Block.Nodes[count].Kind() != ast.RETURN_STMT) {
 		gen.emit(XORL, EAX, EAX)
 	}
 
 	gen.epilogue()
 }
 
-func (gen *Gen) expr(e Expr) {
+func (gen *Gen) expr(e ast.Expr) {
 	switch v := e.(type) {
-	case BinaryExpr:
+	case ast.BinaryExpr:
 		gen.binary(v)
-	case Ident:
+	case ast.Ident:
 		if col, ok := gen.lookup(v.Token.String()); ok {
 			gen.emitf("\t%s \t%d(%s), %s\n", mov(col.ty), -col.pos, RBP, registerA(col.ty))
 		} else {
 			panic("ident is not defined")
 		}
-	case IntVal:
-		gen.emit(mov(C_int), v, registerA(C_int))
-	case CharVal:
-		gen.emit(mov(C_char), v, registerA(C_char))
-	case FuncCall:
+	case ast.IntVal:
+		gen.emit(mov(ast.C_int), v, registerA(ast.C_int))
+	case ast.CharVal:
+		gen.emit(mov(ast.C_char), v, registerA(ast.C_char))
+	case ast.FuncCall:
 		gen.funcCall(v)
-	case UnaryExpr:
+	case ast.UnaryExpr:
 		gen.unaryExpr(v)
-	case PointerVal:
+	case ast.PtrVal:
 		gen.pointerVal(v)
-	case AddressVal:
+	case ast.AddressVal:
 		gen.addressVal(v)
-	case AssignExpr:
+	case ast.AssignExpr:
 		gen.assignExpr(v)
-	case SubscriptExpr:
+	case ast.SubscriptExpr:
 		gen.subscriptExpr(v)
 	default:
 		panic(fmt.Sprintf("unimplemented expr type: %s", reflect.TypeOf(e)))
 	}
 }
 
-func (gen *Gen) stmt(e Stmt) {
+func (gen *Gen) stmt(e ast.Stmt) {
 	switch v := e.(type) {
-	case ExprStmt:
+	case ast.ExprStmt:
 		gen.expr(v.Expr)
-	case ReturnStmt:
+	case ast.ReturnStmt:
 		gen.expr(v.Expr)
 	}
 }
 
-func (gen *Gen) binary(e BinaryExpr) {
+func (gen *Gen) binary(e ast.BinaryExpr) {
 	gen.expr(e.X)
 	gen.emit(PUSH, RAX)
 
@@ -247,13 +246,13 @@ func (gen *Gen) binary(e BinaryExpr) {
 	gen.emit(POP, RAX)
 
 	var c Opcode
-	if e.Op.Kind == ADD {
+	if e.Op.Kind == token.ADD {
 		c = ADDL
-	} else if e.Op.Kind == SUB {
+	} else if e.Op.Kind == token.SUB {
 		c = SUBL
-	} else if e.Op.Kind == MUL {
+	} else if e.Op.Kind == token.MUL {
 		c = IMUL
-	} else if e.Op.Kind == DIV || e.Op.Kind == REM {
+	} else if e.Op.Kind == token.DIV || e.Op.Kind == token.REM {
 		c = IDIV
 	} else {
 		panic("unimplemented")
@@ -262,7 +261,7 @@ func (gen *Gen) binary(e BinaryExpr) {
 	if c == IDIV {
 		gen.emit(CLTD)
 		gen.emit(IDIV, EBX)
-		if e.Op.Kind == REM {
+		if e.Op.Kind == token.REM {
 			gen.emit(MOVL, EDX, EAX)
 		}
 	} else {
@@ -270,37 +269,37 @@ func (gen *Gen) binary(e BinaryExpr) {
 	}
 }
 
-func (gen *Gen) funcCall(e FuncCall) {
+func (gen *Gen) funcCall(e ast.FuncCall) {
 	for i := len(e.Args) - 1; i >= 0; i-- {
 		gen.expr(e.Args[i])
 		if i > ARG_COUNT-1 {
 			gen.emit(PUSH, RAX)
 		} else {
 			// FIXME
-			gen.emit(MOVQ, RAX, argsRegister(i, C_pointer))
+			gen.emit(MOVQ, RAX, argsRegister(i, ast.C_pointer))
 		}
 	}
 	gen.emit(CALL, e.Ident)
 }
 
-func (gen *Gen) unaryExpr(e UnaryExpr) {
+func (gen *Gen) unaryExpr(e ast.UnaryExpr) {
 	panic("gen.unaryExpr")
 }
 
-func (gen *Gen) assignExpr(e AssignExpr) {
+func (gen *Gen) assignExpr(e ast.AssignExpr) {
 	gen.expr(e.R)
 
 	switch v := e.L.(type) {
-	case PointerVal:
+	case ast.PtrVal:
 		if col, ok := gen.lookup(v.Token.String()); ok {
 			gen.emitf("\t%s\t%d(%s), %s\n", mov(col.ty), -col.pos, RBP, registerB(col.ty))
 		} else {
 			panic("ident is not defined")
 		}
 		gen.emitf("\t%s\t%s, (%s)\n", MOVQ, RAX, RBX)
-	case SubscriptExpr:
+	case ast.SubscriptExpr:
 		if col, ok := gen.lookup(v.Token.String()); ok {
-			i, ok := v.Expr.(IntVal)
+			i, ok := v.Expr.(ast.IntVal)
 			if !ok {
 				panic("subscript expr is not intVal")
 			}
@@ -313,9 +312,9 @@ func (gen *Gen) assignExpr(e AssignExpr) {
 	}
 }
 
-func (gen *Gen) subscriptExpr(e SubscriptExpr) {
+func (gen *Gen) subscriptExpr(e ast.SubscriptExpr) {
 	if col, ok := gen.lookup(e.Token.String()); ok {
-		i, ok := e.Expr.(IntVal)
+		i, ok := e.Expr.(ast.IntVal)
 		if !ok {
 			panic("subscript should be intVal")
 		}
@@ -326,7 +325,7 @@ func (gen *Gen) subscriptExpr(e SubscriptExpr) {
 	}
 }
 
-func (gen *Gen) pointerVal(e PointerVal) {
+func (gen *Gen) pointerVal(e ast.PtrVal) {
 	if col, ok := gen.lookup(e.Token.String()); ok {
 		gen.emitf("\t%s\t%d(%s), %s\n", mov(col.ty), -col.pos, RBP, registerB(col.ty))
 		gen.emitf("\t%s\t(%s), %s\n", mov(col.ty), registerB(col.ty), registerA(col.ty))
@@ -335,7 +334,7 @@ func (gen *Gen) pointerVal(e PointerVal) {
 	}
 }
 
-func (gen *Gen) addressVal(e AddressVal) {
+func (gen *Gen) addressVal(e ast.AddressVal) {
 	if col, ok := gen.lookup(e.Token.String()); ok {
 		gen.emitf("\t%s\t%d(%s), %s\n", LEAQ, -col.pos, RBP, RAX)
 	} else {

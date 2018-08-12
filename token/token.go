@@ -1,4 +1,4 @@
-package gocc
+package token
 
 type TokenKind int
 
@@ -253,6 +253,12 @@ var SingleTokens = map[byte]TokenKind{
 	',': COMMA,
 	':': COLON,
 	'~': TILDE,
+}
+
+type Position struct {
+	Line   int
+	Column int
+	Offset int
 }
 
 type Token struct {

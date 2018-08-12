@@ -1,20 +1,16 @@
-package gocc
+package lexer
 
-type Position struct {
-	Line   int
-	Column int
-	Offset int
-}
+import "gocc/token"
 
 type Scanner struct {
 	source []byte
-	pos    Position
+	pos    token.Position
 }
 
 func NewScanner(source []byte) *Scanner {
 	return &Scanner{
 		source: source,
-		pos: Position{
+		pos: token.Position{
 			Line:   1,
 			Column: 1,
 			Offset: 0,
@@ -22,7 +18,7 @@ func NewScanner(source []byte) *Scanner {
 	}
 }
 
-func (s *Scanner) Pos() Position {
+func (s *Scanner) Pos() token.Position {
 	return s.pos
 }
 
@@ -44,6 +40,6 @@ func (s *Scanner) IsEnd() bool {
 	return int(s.pos.Offset) >= len(s.source)
 }
 
-func (s *Scanner) Reset(pos Position) {
+func (s *Scanner) Reset(pos token.Position) {
 	s.pos = pos
 }
