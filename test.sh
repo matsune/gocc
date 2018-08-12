@@ -8,7 +8,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 CLEAR='\033[0m'
 
-go build -o $APP . 
+go build -o $APP .
 if [ $? -ne 0 ]; then
   exit 1
 fi
@@ -43,7 +43,7 @@ test() {
     exit 1
   fi
   ASM_FILE="${ASM}/${1}.s"
-  ./$APP -o $ASM_FILE $FILE || return
+  ./$APP -S -o $ASM_FILE $FILE || return
   gcc $ASM_FILE -o $OUT
   ./$OUT
   res=$?
