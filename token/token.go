@@ -1,5 +1,25 @@
 package token
 
+type Position struct {
+	Line   int
+	Column int
+	Offset int
+}
+
+type Token struct {
+	Kind TokenKind
+	Str  []byte
+	Pos  Position
+}
+
+func NewToken() *Token {
+	return &Token{Kind: UNKNOWN}
+}
+
+func (t Token) String() string {
+	return string(t.Str)
+}
+
 type TokenKind int
 
 const (
@@ -202,75 +222,4 @@ func (k TokenKind) String() string {
 		COMMENT: "COMMENT",
 		UNKNOWN: "UNKNOWN",
 	}[k]
-}
-
-var TypeKeys = map[string]TokenKind{
-	"int":      INT,
-	"void":     VOID,
-	"char":     CHAR,
-	"float":    FLOAT,
-	"long":     LONG,
-	"short":    SHORT,
-	"double":   DOUBLE,
-	"struct":   STRUCT,
-	"union":    UNION,
-	"signed":   SIGNED,
-	"unsigned": UNSIGNED,
-	"static":   STATIC,
-	"auto":     AUTO,
-	"extern":   EXTERN,
-	"register": REGISTER,
-	"const":    CONST,
-	"volatile": VOLATILE,
-}
-
-var Keywords = map[string]TokenKind{
-	"do":       DO,
-	"while":    WHILE,
-	"if":       IF,
-	"else":     ELSE,
-	"for":      FOR,
-	"return":   RETURN,
-	"switch":   SWITCH,
-	"case":     CASE,
-	"default":  DEFAULT,
-	"continue": CONTINUE,
-	"break":    BREAK,
-	"goto":     GOTO,
-	"sizeof":   SIZEOF,
-	"typedef":  TYPEDEF,
-}
-
-var SingleTokens = map[byte]TokenKind{
-	'?': QUE,
-	'(': LPAREN,
-	')': RPAREN,
-	'{': LBRACE,
-	'}': RBRACE,
-	'[': LBRACK,
-	']': RBRACK,
-	';': SEMICOLON,
-	',': COMMA,
-	':': COLON,
-	'~': TILDE,
-}
-
-type Position struct {
-	Line   int
-	Column int
-	Offset int
-}
-
-type Token struct {
-	Kind TokenKind
-	Str  []byte
-	Pos  Position
-}
-
-func NewToken() *Token {
-	return &Token{Kind: UNKNOWN}
-}
-
-func (t Token) String() string {
-	return string(t.Str)
 }

@@ -79,10 +79,10 @@ func (l *Lexer) parseAlpha(t *token.Token) {
 }
 
 func checkKeyword(s string) token.TokenKind {
-	if v, ok := token.TypeKeys[s]; ok {
+	if v, ok := typeKeys[s]; ok {
 		return v
 	}
-	if v, ok := token.Keywords[s]; ok {
+	if v, ok := keywords[s]; ok {
 		return v
 	}
 	return token.IDENT
@@ -130,7 +130,7 @@ func isDigit(c byte) bool {
 }
 
 func checkSingleToken(c byte) (token.TokenKind, bool) {
-	if v, ok := token.SingleTokens[c]; ok {
+	if v, ok := singleTokens[c]; ok {
 		return v, ok
 	}
 	return token.EOF, false

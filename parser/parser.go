@@ -15,7 +15,7 @@ type Parser struct {
 }
 
 func NewParser(source []byte) *Parser {
-	p := &Parser{lexer: lexer.NewLexer(source), token: token.NewToken(), stack: &Stack{}}
+	p := &Parser{lexer: lexer.NewLexer(source), token: token.NewToken(), stack: NewStack()}
 	p.next()
 	return p
 }
@@ -45,72 +45,6 @@ func (p *Parser) pop() {
 	p.token = t
 	p.lexer.Reset(pos)
 }
-
-var (
-	typeKeys = []token.TokenKind{
-		token.INT,
-		token.VOID,
-		token.CHAR,
-		token.FLOAT,
-		token.LONG,
-		token.SHORT,
-		token.DOUBLE,
-		token.STRUCT,
-		token.UNION,
-		token.SIGNED,
-		token.UNSIGNED,
-		token.STATIC,
-		token.AUTO,
-		token.EXTERN,
-		token.REGISTER,
-		token.CONST,
-		token.VOLATILE,
-	}
-
-	unaryOps = []token.TokenKind{
-		token.AND,
-		token.MUL,
-		token.ADD,
-		token.SUB,
-		token.TILDE,
-		token.NOT,
-	}
-
-	assignOps = []token.TokenKind{
-		token.ASSIGN,
-		token.MUL_ASSIGN,
-		token.DIV_ASSIGN,
-		token.REM_ASSIGN,
-		token.ADD_ASSIGN,
-		token.SUB_ASSIGN,
-		token.LEFT_ASSIGN,
-		token.RIGHT_ASSIGN,
-		token.AND_ASSIGN,
-		token.OR_ASSIGN,
-		token.XOR_ASSIGN,
-	}
-
-	storageSpecifiers = []token.TokenKind{
-		token.AUTO,
-		token.REGISTER,
-		token.STATIC,
-		token.EXTERN,
-		token.TYPEDEF,
-	}
-
-	typeSpecifiers = []token.TokenKind{
-		token.VOID,
-		token.CHAR,
-		token.SHORT,
-		token.INT,
-		token.SHORT,
-		token.LONG,
-		token.FLOAT,
-		token.DOUBLE,
-		token.SIGNED,
-		token.UNSIGNED,
-	}
-)
 
 func (p *Parser) assert(t token.TokenKind) {
 	if !p.match(t) {

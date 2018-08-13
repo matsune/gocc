@@ -4,19 +4,23 @@ import "gocc/token"
 
 type Stack struct {
 	ts    []token.Token
-	poss  []token.Position
+	ps    []token.Position
 	count int
+}
+
+func NewStack() *Stack {
+	return &Stack{}
 }
 
 func (s *Stack) push(t token.Token, pos token.Position) {
 	s.ts = append(s.ts, t)
-	s.poss = append(s.poss, pos)
+	s.ps = append(s.ps, pos)
 	s.count++
 }
 
 func (s *Stack) pop() (*token.Token, token.Position) {
 	s.count--
-	t, p := &s.ts[s.count], s.poss[s.count]
+	t, p := &s.ts[s.count], s.ps[s.count]
 	s.remove(s.count)
 	return t, p
 }
@@ -30,11 +34,11 @@ func (s *Stack) remove(at int) {
 		}
 	}
 	resP := []token.Position{}
-	for i, v := range s.poss {
+	for i, v := range s.ps {
 		if i != at {
 			resP = append(resP, v)
 		}
 	}
 	s.ts = resT
-	s.poss = resP
+	s.ps = resP
 }
