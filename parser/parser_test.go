@@ -1,9 +1,8 @@
 package parser
 
 import (
-	"fmt"
 	"gocc/ast"
-	. "gocc/token"
+	"gocc/token"
 	"reflect"
 	"testing"
 )
@@ -67,8 +66,8 @@ func TestBinaryExpr(t *testing.T) {
 	intValExpect(t, xx, 1)
 
 	// +
-	if x.Op.Kind != ADD {
-		t.Errorf("expected op is %s", ADD)
+	if x.Op.Kind != token.ADD {
+		t.Errorf("expected op is %s", token.ADD)
 		return
 	}
 
@@ -93,8 +92,8 @@ func TestBinaryExpr(t *testing.T) {
 	}
 	intValExpect(t, xyy, 3)
 
-	if xy.Op.Kind != MUL {
-		t.Errorf("expected op is %s", MUL)
+	if xy.Op.Kind != token.MUL {
+		t.Errorf("expected op is %s", token.MUL)
 		return
 	}
 
@@ -126,8 +125,8 @@ func TestBinaryExpr(t *testing.T) {
 	}
 	intValExpect(t, yxy, 5)
 
-	if yx.Op.Kind != DIV {
-		t.Errorf("expected op is %s", DIV)
+	if yx.Op.Kind != token.DIV {
+		t.Errorf("expected op is %s", token.DIV)
 		return
 	}
 
@@ -138,8 +137,8 @@ func TestBinaryExpr(t *testing.T) {
 	}
 	intValExpect(t, yy, 6)
 
-	if y.Op.Kind != ADD {
-		t.Errorf("expected op is %s", ADD)
+	if y.Op.Kind != token.ADD {
+		t.Errorf("expected op is %s", token.ADD)
 		return
 	}
 }
@@ -363,15 +362,24 @@ func TestReturnSubscript(t *testing.T) {
 	}
 }
 
-func TestSubscriptAssign(t *testing.T) {
-	p := NewParser([]byte("a[2] = 5;"))
-	e := p.expr()
-	fmt.Println(e)
-}
+func TestIfStmt(t *testing.T) {
+	p := NewParser([]byte("if (a == 2) { return 1; }"))
+	i := p.ifStmt()
+	e := i.Expr.(ast.BinaryExpr)
+	if e.Op.Kind != token.EQ {
+		t.Errorf("expected token is %s, but got %s", token.EQ, e.Op.Kind)
+	}
+	x := e.X.(ast.Ident)
+	if x.Token.String() != "a" {
+		t.Errorf("expected token is %s, but got %s", "a", x)
+	}
+	y := e.Y.(ast.IntVal)
+	if y.Num != 2 {
+		t.Errorf("expected num is %d, but got %d", 2, y.Num)
+	}
 
-//
-// func TestArrayNoSize(t *testing.T) {
-// 	p := NewParser([]byte("int a[];"))
-// 	e := p.readVarDef()
-// 	fmt.Println(e)
-// }
+	b := i.Block
+	if len(b.Nodes) != 1 {
+		t.Errorf("expected number of nodes is %d, but got %d", 1, len(b.Nodes))
+	}
+}

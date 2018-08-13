@@ -123,7 +123,7 @@ func (gen *Gen) varDef(n ast.VarDef) {
 
 func (gen *Gen) arrayDef(a ast.ArrayDef) {
 	if a.Subscript == nil {
-		// int a[] = {0, 1}
+		// e.g.) int a[] = {0, 1}
 		s := len(a.Init.List) * a.Type.Bytes()
 
 		gen.pos += s
@@ -135,7 +135,7 @@ func (gen *Gen) arrayDef(a ast.ArrayDef) {
 			gen.emitf("\t%s\t%s, %d(%s)\n", mov(a.Type), registerA(a.Type), a.Type.Bytes()*idx-gen.pos, RBP)
 		}
 	} else {
-		// int a[5]
+		// e.g.) int a[5]
 		i, ok := (*a.Subscript).(ast.IntVal)
 		if !ok {
 			panic("subscript is not intVal")

@@ -29,6 +29,7 @@ const (
 	BLOCK_STMT
 	RETURN_STMT
 	EXPR_STMT
+	IF_STMT
 )
 
 type CType int
@@ -194,6 +195,11 @@ type (
 	ExprStmt struct {
 		Expr Expr
 	}
+
+	IfStmt struct {
+		Expr  Expr
+		Block BlockStmt
+	}
 )
 
 func (VarDef) Kind() Kind        { return VAR_DEF }
@@ -215,6 +221,7 @@ func (ArrayInit) Kind() Kind     { return ARRAY_INIT }
 func (BlockStmt) Kind() Kind     { return BLOCK_STMT }
 func (ReturnStmt) Kind() Kind    { return RETURN_STMT }
 func (ExprStmt) Kind() Kind      { return EXPR_STMT }
+func (IfStmt) Kind() Kind        { return IF_STMT }
 
 func (Ident) expr()         {}
 func (BinaryExpr) expr()    {}
@@ -232,6 +239,7 @@ func (ArrayInit) expr()     {}
 func (BlockStmt) stmt()  {}
 func (ReturnStmt) stmt() {}
 func (ExprStmt) stmt()   {}
+func (IfStmt) stmt()     {}
 
 func (i IntVal) Str() string  { return fmt.Sprintf("$%d", i.Num) }
 func (c CharVal) Str() string { return "$" + fmt.Sprintf("%d", c.Token.Str[0]) }

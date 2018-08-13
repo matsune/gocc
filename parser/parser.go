@@ -640,7 +640,29 @@ func (p *Parser) isSelectionStmt() bool {
 }
 
 func (p *Parser) selectionStmt() ast.Stmt {
-	panic("selectionStmt")
+	if p.match(token.IF) {
+		return p.ifStmt()
+	} else if p.match(token.SWITCH) {
+		panic("selection stmt switch is not implemented.")
+	} else {
+		panic(fmt.Sprintf("%s not selection Stmt", p.token))
+	}
+}
+
+func (p *Parser) ifStmt() ast.IfStmt {
+	p.next()
+
+	p.assert(token.LPAREN)
+	p.next()
+
+	e := p.expr()
+
+	p.assert(token.RPAREN)
+	p.next()
+
+	b := p.blockStmt()
+
+	return ast.IfStmt{Expr: e, Block: b}
 }
 
 func (p *Parser) isIterationStmt() bool {
