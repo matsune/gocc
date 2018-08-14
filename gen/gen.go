@@ -240,35 +240,51 @@ func (gen *Gen) stmt(e ast.Stmt) {
 	}
 }
 
+func (gen *Gen) blockStmt(b ast.BlockStmt) {
+	for _, n := range b.Nodes {
+		gen.Generate(n)
+	}
+}
+
 func (gen *Gen) ifStmt(v ast.IfStmt) {
-	switch e := (*v.Expr).(type) {
-	case ast.BinaryExpr:
-		switch e.Op.Kind {
-		case token.EQ:
-			gen.expr(e.X)
-			gen.emit(PUSH, RAX)
+	if e := v.Expr; e != nil { // if (...) { ... }
+		switch e := (*v.Expr).(type) {
+		case ast.BinaryExpr:
+			switch e.Op.Kind {
+			case token.EQ:
+				gen.expr(e.X)
+				gen.emit(PUSH, RAX)
 
-			gen.expr(e.Y)
-			gen.emit(MOVL, EAX, EBX)
+				gen.expr(e.Y)
+				gen.emit(MOVL, EAX, EBX)
 
-			gen.emit(POP, RAX)
+				gen.emit(POP, RAX)
 
-			gen.emit(CMPL, EBX, EAX)
-			gen.emitf("\t%s\tL%d\n", JNE, ifCount)
+				gen.emit(CMPL, EBX, EAX)
+				gen.emitf("\t%s\tL%d\n", JNE, ifCount)
 
-			for _, n := range v.Block.Nodes {
-				gen.Generate(n)
+				gen.blockStmt(v.Block)
+				if v.Else != nil {
+					gen.emitf("\t%s\tL%d\n", JMP, ifCount+1)
+				}
+
+				gen.emitf("L%d:\n", ifCount)
+				ifCount++
+
+				if el := v.Else; el != nil {
+					gen.ifStmt(*el)
+				}
+			case token.NE:
+				panic("unimplemented !=")
 			}
-
-			gen.emitf("L%d:\n", ifCount)
-			ifCount++
-		case token.NE:
-			panic("unimplemented !=")
+		case ast.IntVal:
+			panic("unimplemented if ast.IntVal")
+		default:
+			panic("unimplemented if expr type")
 		}
-	case ast.IntVal:
-		panic("unimplemented if ast.IntVal")
-	default:
-		panic("unimplemented if expr type")
+	} else { // else { ... }
+		gen.blockStmt(v.Block)
+		gen.emitf("L%d:\n", ifCount)
 	}
 }
 
