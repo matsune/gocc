@@ -57,33 +57,30 @@ test() {
   fi
 }
 
-test 1 0
-test 2 2
-test 3 2
-test 4 0
-test 5 41
+test return_int 2
+test add_sub 2
+test mul_div 0
+test add_sub_mul_div 41
 
-test 6 4
-test 7 20
-test 8 7
-test 9 30
-test 10 43
+test var_def 4
+test var_def_expr 20
+test var_def_2 7
+test var_def_3 43
 
-test 11 11
-test 12 3
-test 13 15
-test 14 110
+test call_no_arg 11
+test call_2_args 3
+test call_10_args 110
 
-test 15 98
-test 16 195
-test 17 118
+test char 98
+test char_arg 195
+test char_int_args 118
 
-test 18 3
-test 19 20
+test pointer 3
+test pointer2 20
 
-test 20 16
+test array 16
 
-test 21 1
+test if_stmt 1
 
 echo "Finished test."
 FAILED=$(( COUNT - PASSED ))
