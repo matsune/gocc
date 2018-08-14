@@ -19,6 +19,8 @@ const (
 	UNARY_EXPR
 	ASSIGN_EXPR
 	SUBSCRIPT_EXPR
+	INC_EXPR
+	DEC_EXPR
 	FUNC_CALL
 	INT_VAL
 	CHAR_VAL
@@ -153,6 +155,14 @@ type (
 		Expr  Expr
 	}
 
+	IncExpr struct {
+		Postfix Expr
+	}
+
+	DecExpr struct {
+		Postfix Expr
+	}
+
 	IntVal struct {
 		Num int
 	}
@@ -213,6 +223,8 @@ func (CondExpr) Kind() Kind      { return COND_EXPR }
 func (UnaryExpr) Kind() Kind     { return UNARY_EXPR }
 func (AssignExpr) Kind() Kind    { return ASSIGN_EXPR }
 func (SubscriptExpr) Kind() Kind { return SUBSCRIPT_EXPR }
+func (IncExpr) Kind() Kind       { return INC_EXPR }
+func (DecExpr) Kind() Kind       { return DEC_EXPR }
 func (FuncCall) Kind() Kind      { return FUNC_CALL }
 func (IntVal) Kind() Kind        { return INT_VAL }
 func (CharVal) Kind() Kind       { return CHAR_VAL }
@@ -230,6 +242,8 @@ func (CondExpr) expr()      {}
 func (UnaryExpr) expr()     {}
 func (AssignExpr) expr()    {}
 func (SubscriptExpr) expr() {}
+func (IncExpr) expr()       {}
+func (DecExpr) expr()       {}
 func (FuncCall) expr()      {}
 func (IntVal) expr()        {}
 func (CharVal) expr()       {}

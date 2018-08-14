@@ -472,8 +472,12 @@ func (p *Parser) castExpr() ast.Expr {
 }
 
 func (p *Parser) unaryExpr() ast.Expr {
-	if p.match(token.INC) || p.match(token.DEC) {
-		panic("unimplemented unaryExpr")
+	if p.match(token.INC) {
+		p.next()
+		return ast.IncExpr{Postfix: p.unaryExpr()}
+	} else if p.match(token.DEC) {
+		p.next()
+		return ast.DecExpr{Postfix: p.unaryExpr()}
 	} else if p.isUnaryOp() {
 		op := p.token
 		p.next()
@@ -506,9 +510,11 @@ func (p *Parser) postfixExpr() ast.Expr {
 
 func (p *Parser) postfixExpr2(e ast.Expr) ast.Expr {
 	if p.match(token.INC) {
-		panic("postfix increment")
+		p.next()
+		return ast.IncExpr{Postfix: e}
 	} else if p.match(token.DEC) {
-		panic("postfix decrement")
+		p.next()
+		return ast.DecExpr{Postfix: e}
 	} else if p.match(token.LPAREN) {
 		switch e.(type) {
 		case ast.Ident:
