@@ -156,11 +156,11 @@ type (
 	}
 
 	IncExpr struct {
-		Postfix Expr
+		Ident Ident
 	}
 
 	DecExpr struct {
-		Postfix Expr
+		Ident Ident
 	}
 
 	IntVal struct {

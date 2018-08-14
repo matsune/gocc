@@ -84,6 +84,8 @@ test if_stmt 1
 test if_else 10
 test if_else_if 1
 
+test inc_dec 11
+
 echo "Finished test."
 FAILED=$(( COUNT - PASSED ))
 echo "${GREEN}PASSED: ${PASSED}\t${RED}FAILED: ${FAILED}${CLEAR}"

@@ -224,6 +224,26 @@ func (gen *Gen) expr(e ast.Expr) {
 		gen.assignExpr(v)
 	case ast.SubscriptExpr:
 		gen.subscriptExpr(v)
+	case ast.IncExpr:
+		if col, ok := gen.lookup(v.Ident.Token.String()); ok {
+			if col.ty == ast.C_pointer {
+				gen.emitf("\t%s\t%s, %d(%s)\n", ADDL, "$4", -col.pos, RBP)
+			} else {
+				gen.emitf("\t%s\t%s, %d(%s)\n", ADDL, "$1", -col.pos, RBP)
+			}
+		} else {
+			panic("ident is not defined")
+		}
+	case ast.DecExpr:
+		if col, ok := gen.lookup(v.Ident.Token.String()); ok {
+			if col.ty == ast.C_pointer {
+				gen.emitf("\t%s\t%s, %d(%s)\n", SUBL, "$4", -col.pos, RBP)
+			} else {
+				gen.emitf("\t%s\t%s, %d(%s)\n", SUBL, "$1", -col.pos, RBP)
+			}
+		} else {
+			panic("ident is not defined")
+		}
 	default:
 		panic(fmt.Sprintf("unimplemented expr type: %s", reflect.TypeOf(e)))
 	}

@@ -474,10 +474,18 @@ func (p *Parser) castExpr() ast.Expr {
 func (p *Parser) unaryExpr() ast.Expr {
 	if p.match(token.INC) {
 		p.next()
-		return ast.IncExpr{Postfix: p.unaryExpr()}
+		i, ok := p.unaryExpr().(ast.Ident)
+		if !ok {
+			panic("unimplemented not ident increment")
+		}
+		return ast.IncExpr{Ident: i}
 	} else if p.match(token.DEC) {
 		p.next()
-		return ast.DecExpr{Postfix: p.unaryExpr()}
+		i, ok := p.unaryExpr().(ast.Ident)
+		if !ok {
+			panic("unimplemented not ident decrement")
+		}
+		return ast.DecExpr{Ident: i}
 	} else if p.isUnaryOp() {
 		op := p.token
 		p.next()
@@ -511,10 +519,18 @@ func (p *Parser) postfixExpr() ast.Expr {
 func (p *Parser) postfixExpr2(e ast.Expr) ast.Expr {
 	if p.match(token.INC) {
 		p.next()
-		return ast.IncExpr{Postfix: e}
+		i, ok := e.(ast.Ident)
+		if !ok {
+			panic("unimplemented not ident increment")
+		}
+		return ast.IncExpr{Ident: i}
 	} else if p.match(token.DEC) {
 		p.next()
-		return ast.DecExpr{Postfix: e}
+		i, ok := e.(ast.Ident)
+		if !ok {
+			panic("unimplemented not ident decrement")
+		}
+		return ast.DecExpr{Ident: i}
 	} else if p.match(token.LPAREN) {
 		switch e.(type) {
 		case ast.Ident:

@@ -418,15 +418,13 @@ func TestIncrement(t *testing.T) {
 	p := NewParser([]byte("{a++; ++a;}"))
 	b := p.blockStmt()
 	i1 := b.Nodes[0].(ast.ExprStmt).Expr.(ast.IncExpr)
-	a := i1.Postfix.(ast.Ident)
-	if a.Token.String() != "a" {
-		t.Errorf("expected ident is %s, but got %s", "a", a.Token)
+	if i1.Ident.Token.String() != "a" {
+		t.Errorf("expected ident is %s, but got %s", "a", i1.Ident)
 	}
 
 	i2 := b.Nodes[1].(ast.ExprStmt).Expr.(ast.IncExpr)
-	a = i2.Postfix.(ast.Ident)
-	if a.Token.String() != "a" {
-		t.Errorf("expected ident is %s, but got %s", "a", a.Token)
+	if i2.Ident.Token.String() != "a" {
+		t.Errorf("expected ident is %s, but got %s", "a", i2.Ident.Token)
 	}
 }
 
@@ -434,14 +432,12 @@ func TestDecrement(t *testing.T) {
 	p := NewParser([]byte("{a--; --a;}"))
 	b := p.blockStmt()
 	i1 := b.Nodes[0].(ast.ExprStmt).Expr.(ast.DecExpr)
-	a := i1.Postfix.(ast.Ident)
-	if a.Token.String() != "a" {
-		t.Errorf("expected ident is %s, but got %s", "a", a.Token)
+	if i1.Ident.Token.String() != "a" {
+		t.Errorf("expected ident is %s, but got %s", "a", i1.Ident.Token)
 	}
 
 	i2 := b.Nodes[1].(ast.ExprStmt).Expr.(ast.DecExpr)
-	a = i2.Postfix.(ast.Ident)
-	if a.Token.String() != "a" {
-		t.Errorf("expected ident is %s, but got %s", "a", a.Token)
+	if i2.Ident.Token.String() != "a" {
+		t.Errorf("expected ident is %s, but got %s", "a", i2.Ident.Token)
 	}
 }
