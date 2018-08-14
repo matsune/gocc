@@ -197,8 +197,9 @@ type (
 	}
 
 	IfStmt struct {
-		Expr  Expr
+		Expr  *Expr
 		Block BlockStmt
+		Else  *IfStmt
 	}
 )
 

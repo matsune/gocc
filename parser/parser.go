@@ -650,6 +650,7 @@ func (p *Parser) selectionStmt() ast.Stmt {
 }
 
 func (p *Parser) ifStmt() ast.IfStmt {
+	p.assert(token.IF)
 	p.next()
 
 	p.assert(token.LPAREN)
@@ -662,7 +663,22 @@ func (p *Parser) ifStmt() ast.IfStmt {
 
 	b := p.blockStmt()
 
-	return ast.IfStmt{Expr: e, Block: b}
+	return ast.IfStmt{Expr: &e, Block: b, Else: p.elseStmt()}
+}
+
+func (p *Parser) elseStmt() *ast.IfStmt {
+	if !p.match(token.ELSE) {
+		return nil
+	}
+
+	p.next()
+
+	if p.match(token.IF) {
+		s := p.ifStmt()
+		return &s
+	} else {
+		return &ast.IfStmt{Expr: nil, Block: p.blockStmt(), Else: nil}
+	}
 }
 
 func (p *Parser) isIterationStmt() bool {

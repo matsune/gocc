@@ -363,9 +363,9 @@ func TestReturnSubscript(t *testing.T) {
 }
 
 func TestIfStmt(t *testing.T) {
-	p := NewParser([]byte("if (a == 2) { return 1; }"))
-	i := p.ifStmt()
-	e := i.Expr.(ast.BinaryExpr)
+	p := NewParser([]byte("if (a == 0) { return 0; } else if (a == 1) { return 1; } else { return 2; }"))
+	if1 := p.ifStmt()
+	e := (*if1.Expr).(ast.BinaryExpr)
 	if e.Op.Kind != token.EQ {
 		t.Errorf("expected token is %s, but got %s", token.EQ, e.Op.Kind)
 	}
@@ -374,12 +374,42 @@ func TestIfStmt(t *testing.T) {
 		t.Errorf("expected token is %s, but got %s", "a", x)
 	}
 	y := e.Y.(ast.IntVal)
-	if y.Num != 2 {
-		t.Errorf("expected num is %d, but got %d", 2, y.Num)
+	if y.Num != 0 {
+		t.Errorf("expected num is %d, but got %d", 0, y.Num)
 	}
 
-	b := i.Block
-	if len(b.Nodes) != 1 {
-		t.Errorf("expected number of nodes is %d, but got %d", 1, len(b.Nodes))
+	n := if1.Block.Nodes[0].(ast.ReturnStmt).Expr.(ast.IntVal)
+	if n.Num != 0 {
+		t.Errorf("expected return is %d, but got %d", 0, n.Num)
+	}
+
+	if2 := if1.Else
+	e2 := (*if2.Expr).(ast.BinaryExpr)
+	x = e2.X.(ast.Ident)
+	if x.Token.String() != "a" {
+		t.Errorf("expected token is %s, but got %s", "a", x)
+	}
+	y = e2.Y.(ast.IntVal)
+	if y.Num != 1 {
+		t.Errorf("expected num is %d, but got %d", 1, y.Num)
+	}
+
+	n = if2.Block.Nodes[0].(ast.ReturnStmt).Expr.(ast.IntVal)
+	if n.Num != 1 {
+		t.Errorf("expected return is %d, but got %d", 1, n.Num)
+	}
+
+	if3 := if2.Else
+	if if3.Expr != nil {
+		t.Errorf("expected if expr is nil")
+	}
+
+	n = if3.Block.Nodes[0].(ast.ReturnStmt).Expr.(ast.IntVal)
+	if n.Num != 2 {
+		t.Errorf("expected return is %d, but got %d", 2, n.Num)
+	}
+
+	if if3.Else != nil {
+		t.Errorf("expected else stmt is nil")
 	}
 }
