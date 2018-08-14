@@ -24,6 +24,8 @@ func NewGen() *Gen {
 	return &Gen{Str: "", pos: 0, m: Map{}}
 }
 
+var ifCount = 0
+
 var ARG_COUNT = 6
 
 func argsRegister(i int, t ast.CType) Register {
@@ -233,6 +235,40 @@ func (gen *Gen) stmt(e ast.Stmt) {
 		gen.expr(v.Expr)
 	case ast.ReturnStmt:
 		gen.expr(v.Expr)
+	case ast.IfStmt:
+		gen.ifStmt(v)
+	}
+}
+
+func (gen *Gen) ifStmt(v ast.IfStmt) {
+	switch e := (*v.Expr).(type) {
+	case ast.BinaryExpr:
+		switch e.Op.Kind {
+		case token.EQ:
+			gen.expr(e.X)
+			gen.emit(PUSH, RAX)
+
+			gen.expr(e.Y)
+			gen.emit(MOVL, EAX, EBX)
+
+			gen.emit(POP, RAX)
+
+			gen.emit(CMPL, EBX, EAX)
+			gen.emitf("\t%s\tL%d\n", JNE, ifCount)
+
+			for _, n := range v.Block.Nodes {
+				gen.Generate(n)
+			}
+
+			gen.emitf("L%d:\n", ifCount)
+			ifCount++
+		case token.NE:
+			panic("unimplemented !=")
+		}
+	case ast.IntVal:
+		panic("unimplemented if ast.IntVal")
+	default:
+		panic("unimplemented if expr type")
 	}
 }
 
@@ -304,6 +340,12 @@ func (gen *Gen) assignExpr(e ast.AssignExpr) {
 				panic("subscript expr is not intVal")
 			}
 			gen.emitf("\t%s\t%s, %d(%s)\n", mov(col.ty), registerA(col.ty), (i.Num*col.ty.Bytes() - col.pos), RBP)
+		} else {
+			panic("ident is not defined")
+		}
+	case ast.Ident:
+		if col, ok := gen.lookup(v.Token.String()); ok {
+			gen.emitf("\t%s\t%s, %d(%s)\n", mov(col.ty), registerA(col.ty), -col.pos, RBP)
 		} else {
 			panic("ident is not defined")
 		}

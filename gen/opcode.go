@@ -16,6 +16,8 @@ const (
 	IDIV
 	CLTD
 	XORL
+	JNE
+	CMPL
 	PUSH
 	POP
 	LEAQ
@@ -61,6 +63,10 @@ func (c Opcode) String() string {
 		return "cltd"
 	case XORL:
 		return "xorl"
+	case JNE:
+		return "jne"
+	case CMPL:
+		return "cmpl"
 	case PUSH:
 		return "push"
 	case POP:

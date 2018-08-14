@@ -656,7 +656,7 @@ func (p *Parser) ifStmt() ast.IfStmt {
 	p.assert(token.LPAREN)
 	p.next()
 
-	e := p.expr()
+	e := p.conditionalExpr()
 
 	p.assert(token.RPAREN)
 	p.next()
