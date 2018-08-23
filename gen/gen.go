@@ -296,29 +296,20 @@ func (gen *Gen) ifStmt(v ast.IfStmt) {
 	if e := v.Expr; e != nil { // if (...) { ... }
 		switch e := (*v.Expr).(type) {
 		case ast.BinaryExpr:
-			switch e.Op.Kind {
-			case token.EQ, token.NE:
-				gen.binary(e)
+			gen.binary(e)
 
-				if e.Op.Kind == token.EQ {
-					gen.emitf("\t%s\tL%d\n", JNE, labelCount)
-				} else {
-					gen.emitf("\t%s\tL%d\n", JE, labelCount)
-				}
+			gen.invertJump(e.Op.Kind, labelCount)
 
-				gen.blockStmt(v.Block)
-				if v.Else != nil {
-					gen.emitf("\t%s\tL%d\n", JMP, labelCount+1)
-				}
+			gen.blockStmt(v.Block)
+			if v.Else != nil {
+				gen.emitf("\t%s\t.L%d\n", JMP, labelCount+1)
+			}
 
-				gen.emitf("L%d:\n", labelCount)
-				labelCount++
+			gen.emitf(".L%d:\n", labelCount)
+			labelCount++
 
-				if el := v.Else; el != nil {
-					gen.ifStmt(*el)
-				}
-				// case token.NE:
-				// 	panic("unimplemented !=")
+			if el := v.Else; el != nil {
+				gen.ifStmt(*el)
 			}
 		case ast.IntVal:
 			panic("unimplemented if ast.IntVal")
@@ -327,7 +318,7 @@ func (gen *Gen) ifStmt(v ast.IfStmt) {
 		}
 	} else { // else { ... }
 		gen.blockStmt(v.Block)
-		gen.emitf("L%d:\n", labelCount)
+		gen.emitf(".L%d:\n", labelCount)
 	}
 }
 
@@ -345,18 +336,52 @@ func (gen *Gen) forStmt(v ast.ForStmt) {
 	if v.E2 != nil {
 		gen.expr(*v.E2)
 		if b, ok := (*v.E2).(ast.BinaryExpr); ok {
-			switch b.Op.Kind {
-			case token.NE:
-				gen.emitf("\t%s\t.L%d\n", JNE, labelCount+1)
-			case token.EQ:
-				gen.emitf("\t%s\t.L%d\n", JE, labelCount+1)
-			default:
-				panic("unimplemented for binary op")
-			}
-
+			gen.jump(b.Op.Kind, labelCount+1)
 		}
 	}
 	labelCount += 2
+}
+
+func (gen *Gen) jump(kind token.TokenKind, label int) {
+	var op Opcode
+	switch kind {
+	case token.NE:
+		op = JNE
+	case token.EQ:
+		op = JE
+	case token.LT:
+		op = JL
+	case token.LE:
+		op = JLE
+	case token.GT:
+		op = JG
+	case token.GE:
+		op = JGE
+	default:
+		panic(fmt.Sprintf("unimplemented jump token %s", kind))
+	}
+	gen.emitf("\t%s\t.L%d\n", op, label)
+}
+
+func (gen *Gen) invertJump(kind token.TokenKind, label int) {
+	var op Opcode
+	switch kind {
+	case token.NE:
+		op = JE
+	case token.EQ:
+		op = JNE
+	case token.LT:
+		op = JLE
+	case token.LE:
+		op = JL
+	case token.GT:
+		op = JGE
+	case token.GE:
+		op = JG
+	default:
+		panic(fmt.Sprintf("unimplemented jump token %s", kind))
+	}
+	gen.emitf("\t%s\t.L%d\n", op, label)
 }
 
 func (gen *Gen) binary(e ast.BinaryExpr) {
@@ -381,7 +406,7 @@ func (gen *Gen) binary(e ast.BinaryExpr) {
 		if e.Op.Kind == token.REM {
 			gen.emit(MOVL, EDX, EAX)
 		}
-	case token.EQ, token.NE:
+	case token.EQ, token.NE, token.LT, token.LE, token.GT, token.GE:
 		gen.emit(CMPL, EBX, EAX)
 	default:
 		panic("unimplemented binary op")

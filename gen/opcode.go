@@ -20,6 +20,10 @@ const (
 	JMP
 	JE
 	JNE
+	JL
+	JLE
+	JG
+	JGE
 	CMPL
 	PUSH
 	POP
@@ -74,6 +78,14 @@ func (c Opcode) String() string {
 		return "je	"
 	case JNE:
 		return "jne	"
+	case JL:
+		return "jl	"
+	case JLE:
+		return "jle	"
+	case JG:
+		return "jg	"
+	case JGE:
+		return "jge	"
 	case CMPL:
 		return "cmpl"
 	case PUSH:
