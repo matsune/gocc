@@ -83,8 +83,10 @@ test array 16
 test if_stmt 1
 test if_else 10
 test if_else_if 1
+test if_not_equal 4
 
 test inc_dec 11
+
 
 echo "Finished test."
 FAILED=$(( COUNT - PASSED ))

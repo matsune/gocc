@@ -17,6 +17,7 @@ const (
 	CLTD
 	XORL
 	JMP
+	JE
 	JNE
 	CMPL
 	PUSH
@@ -66,6 +67,8 @@ func (c Opcode) String() string {
 		return "xorl"
 	case JMP:
 		return "jmp"
+	case JE:
+		return "je"
 	case JNE:
 		return "jne"
 	case CMPL:

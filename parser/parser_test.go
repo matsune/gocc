@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"gocc/ast"
 	"gocc/token"
 	"reflect"
@@ -440,4 +441,14 @@ func TestDecrement(t *testing.T) {
 	if i2.Ident.Token.String() != "a" {
 		t.Errorf("expected ident is %s, but got %s", "a", i2.Ident.Token)
 	}
+}
+
+func TestNotEqual(t *testing.T) {
+	p := NewParser([]byte("if (a != 1) {}"))
+	b := p.ifStmt()
+	fmt.Println((*b.Expr))
+	// i1 := b.Nodes[0].(ast.ExprStmt).Expr.(ast.DecExpr)
+	// if i1.Ident.Token.String() != "a" {
+	// 	t.Errorf("expected ident is %s, but got %s", "a", i1.Ident.Token)
+	// }
 }

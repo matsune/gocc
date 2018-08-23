@@ -271,7 +271,7 @@ func (gen *Gen) ifStmt(v ast.IfStmt) {
 		switch e := (*v.Expr).(type) {
 		case ast.BinaryExpr:
 			switch e.Op.Kind {
-			case token.EQ:
+			case token.EQ, token.NE:
 				gen.expr(e.X)
 				gen.emit(PUSH, RAX)
 
@@ -281,7 +281,11 @@ func (gen *Gen) ifStmt(v ast.IfStmt) {
 				gen.emit(POP, RAX)
 
 				gen.emit(CMPL, EBX, EAX)
-				gen.emitf("\t%s\tL%d\n", JNE, ifCount)
+				if e.Op.Kind == token.EQ {
+					gen.emitf("\t%s\tL%d\n", JNE, ifCount)
+				} else {
+					gen.emitf("\t%s\tL%d\n", JE, ifCount)
+				}
 
 				gen.blockStmt(v.Block)
 				if v.Else != nil {
@@ -294,8 +298,8 @@ func (gen *Gen) ifStmt(v ast.IfStmt) {
 				if el := v.Else; el != nil {
 					gen.ifStmt(*el)
 				}
-			case token.NE:
-				panic("unimplemented !=")
+				// case token.NE:
+				// 	panic("unimplemented !=")
 			}
 		case ast.IntVal:
 			panic("unimplemented if ast.IntVal")
