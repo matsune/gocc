@@ -71,9 +71,9 @@ func (c Opcode) String() string {
 	case JMP:
 		return "jmp"
 	case JE:
-		return "je"
+		return "je	"
 	case JNE:
-		return "jne"
+		return "jne	"
 	case CMPL:
 		return "cmpl"
 	case PUSH:

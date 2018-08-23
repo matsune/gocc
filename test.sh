@@ -88,6 +88,7 @@ test if_not_equal 4
 test inc_dec 11
 test inc_pointer 1
 
+test for_stmt 10
 
 echo "Finished test."
 FAILED=$(( COUNT - PASSED ))

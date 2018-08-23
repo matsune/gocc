@@ -25,7 +25,7 @@ func NewGen() *Gen {
 	return &Gen{Str: "", pos: 0, m: Map{}}
 }
 
-var ifCount = 0
+var labelCount = 0
 
 var ARG_COUNT = 6
 
@@ -281,6 +281,8 @@ func (gen *Gen) stmt(e ast.Stmt) {
 		gen.expr(v.Expr)
 	case ast.IfStmt:
 		gen.ifStmt(v)
+	case ast.ForStmt:
+		gen.forStmt(v)
 	}
 }
 
@@ -296,28 +298,21 @@ func (gen *Gen) ifStmt(v ast.IfStmt) {
 		case ast.BinaryExpr:
 			switch e.Op.Kind {
 			case token.EQ, token.NE:
-				gen.expr(e.X)
-				gen.emit(PUSH, RAX)
+				gen.binary(e)
 
-				gen.expr(e.Y)
-				gen.emit(MOVL, EAX, EBX)
-
-				gen.emit(POP, RAX)
-
-				gen.emit(CMPL, EBX, EAX)
 				if e.Op.Kind == token.EQ {
-					gen.emitf("\t%s\tL%d\n", JNE, ifCount)
+					gen.emitf("\t%s\tL%d\n", JNE, labelCount)
 				} else {
-					gen.emitf("\t%s\tL%d\n", JE, ifCount)
+					gen.emitf("\t%s\tL%d\n", JE, labelCount)
 				}
 
 				gen.blockStmt(v.Block)
 				if v.Else != nil {
-					gen.emitf("\t%s\tL%d\n", JMP, ifCount+1)
+					gen.emitf("\t%s\tL%d\n", JMP, labelCount+1)
 				}
 
-				gen.emitf("L%d:\n", ifCount)
-				ifCount++
+				gen.emitf("L%d:\n", labelCount)
+				labelCount++
 
 				if el := v.Else; el != nil {
 					gen.ifStmt(*el)
@@ -332,8 +327,36 @@ func (gen *Gen) ifStmt(v ast.IfStmt) {
 		}
 	} else { // else { ... }
 		gen.blockStmt(v.Block)
-		gen.emitf("L%d:\n", ifCount)
+		gen.emitf("L%d:\n", labelCount)
 	}
+}
+
+func (gen *Gen) forStmt(v ast.ForStmt) {
+	if v.E1 != nil {
+		gen.Generate(v.E1)
+	}
+	gen.emitf("\t%s\t.L%d\n", JMP, labelCount)
+	gen.emitf(".L%d:\n", labelCount+1)
+	gen.blockStmt(v.Block)
+	if v.E3 != nil {
+		gen.expr(*v.E3)
+	}
+	gen.emitf(".L%d:\n", labelCount)
+	if v.E2 != nil {
+		gen.expr(*v.E2)
+		if b, ok := (*v.E2).(ast.BinaryExpr); ok {
+			switch b.Op.Kind {
+			case token.NE:
+				gen.emitf("\t%s\t.L%d\n", JNE, labelCount+1)
+			case token.EQ:
+				gen.emitf("\t%s\t.L%d\n", JE, labelCount+1)
+			default:
+				panic("unimplemented for binary op")
+			}
+
+		}
+	}
+	labelCount += 2
 }
 
 func (gen *Gen) binary(e ast.BinaryExpr) {
@@ -345,27 +368,23 @@ func (gen *Gen) binary(e ast.BinaryExpr) {
 
 	gen.emit(POP, RAX)
 
-	var c Opcode
-	if e.Op.Kind == token.ADD {
-		c = ADDL
-	} else if e.Op.Kind == token.SUB {
-		c = SUBL
-	} else if e.Op.Kind == token.MUL {
-		c = IMUL
-	} else if e.Op.Kind == token.DIV || e.Op.Kind == token.REM {
-		c = IDIV
-	} else {
-		panic("unimplemented")
-	}
-
-	if c == IDIV {
+	switch e.Op.Kind {
+	case token.ADD:
+		gen.emit(ADDL, EBX, EAX)
+	case token.SUB:
+		gen.emit(SUBL, EBX, EAX)
+	case token.MUL:
+		gen.emit(IMUL, EBX, EAX)
+	case token.DIV, token.REM:
 		gen.emit(CLTD)
 		gen.emit(IDIV, EBX)
 		if e.Op.Kind == token.REM {
 			gen.emit(MOVL, EDX, EAX)
 		}
-	} else {
-		gen.emit(c, EBX, EAX)
+	case token.EQ, token.NE:
+		gen.emit(CMPL, EBX, EAX)
+	default:
+		panic("unimplemented binary op")
 	}
 }
 
