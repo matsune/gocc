@@ -86,6 +86,7 @@ test if_else_if 1
 test if_not_equal 4
 
 test inc_dec 11
+test inc_pointer 1
 
 
 echo "Finished test."

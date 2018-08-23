@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"gocc/ast"
 	"gocc/token"
 	"reflect"
@@ -144,11 +143,11 @@ func TestBinaryExpr(t *testing.T) {
 	}
 }
 
-func varTypeExpect(t *testing.T, v ast.VarDef, ty ast.CType) {
-	if v.Type != ty {
-		t.Errorf("expected type is %s, but got %s", ty, v.Type)
-	}
-}
+// func varTypeExpect(t *testing.T, v ast.VarDef, ty ast.CType) {
+// 	if v.Type != ty {
+// 		t.Errorf("expected type is %s, but got %s", ty, v.Type)
+// 	}
+// }
 
 func varNameExpect(t *testing.T, v ast.VarDef, name string) {
 	if v.Token.String() != name {
@@ -163,7 +162,9 @@ func TestReadVarDef(t *testing.T) {
 	if !ok {
 		t.Errorf("expected type is VarDef, but got %s", reflect.TypeOf(n))
 	}
-	varTypeExpect(t, v, ast.C_int)
+	if v.Type.Primitive != ast.C_int {
+		t.Errorf("expected type is %s, but got %s", v.Type.Primitive, ast.C_int)
+	}
 	varNameExpect(t, v, "a")
 	if v.Init != nil {
 		t.Errorf("expected varDef is not initialized")
@@ -177,7 +178,9 @@ func TestReadVarDefWithInit(t *testing.T) {
 	if !ok {
 		t.Errorf("expected type is VarDef, but got %s", reflect.TypeOf(n))
 	}
-	varTypeExpect(t, v, ast.C_int)
+	if v.Type.Primitive != ast.C_int {
+		t.Errorf("expected type is %s, but got %s", v.Type.Primitive, ast.C_int)
+	}
 	varNameExpect(t, v, "a")
 	b, ok := (*v.Init).(ast.BinaryExpr)
 	if !ok {
@@ -190,8 +193,8 @@ func TestReadVarDefWithInit(t *testing.T) {
 func TestReadFuncDef(t *testing.T) {
 	p := NewParser([]byte("int main(int argc) { int a = 2 + 4; }"))
 	f := p.readFuncDef()
-	if f.Type != ast.C_int {
-		t.Errorf("expected type is %s, but got %s", ast.C_int, f.Type)
+	if f.Type.Primitive != ast.C_int {
+		t.Errorf("expected type is %s, but got %s", ast.C_int, f.Type.Primitive)
 	}
 	if f.Name != "main" {
 		t.Errorf("expected name is %s, but got %s", "main", f.Name)
@@ -199,8 +202,8 @@ func TestReadFuncDef(t *testing.T) {
 	if len(f.Args) != 1 {
 		t.Errorf("expected args count is %d, but got %d", 1, len(f.Args))
 	}
-	if f.Args[0].Type != ast.C_int {
-		t.Errorf("expected type is %s, but got %s", ast.C_int, f.Args[0].Type)
+	if f.Args[0].Type.Primitive != ast.C_int {
+		t.Errorf("expected type is %s, but got %s", ast.C_int, f.Args[0].Type.Primitive)
 	}
 	if f.Args[0].Name.String() != "argc" {
 		t.Errorf("expected type is %s, but got %s", "argc", f.Args[0].Name)
@@ -213,8 +216,8 @@ func TestReadFuncDef(t *testing.T) {
 	if !ok {
 		t.Errorf("expected block nodes[0] is VarDef, but got %s", reflect.TypeOf(f.Block.Nodes[0]))
 	}
-	if v.Type != ast.C_int {
-		t.Errorf("expected type is %s, but got %s", ast.C_int, v.Type)
+	if v.Type.Primitive != ast.C_int {
+		t.Errorf("expected type is %s, but got %s", ast.C_int, v.Type.Primitive)
 	}
 	if v.Token.String() != "a" {
 		t.Errorf("expected name is %s, but got %s", "a", v.Token.String())
@@ -271,18 +274,21 @@ func TestFuncCall2(t *testing.T) {
 func TestReadType(t *testing.T) {
 	p := NewParser([]byte("int"))
 	ty := p.readType()
-	if ty != ast.C_int {
-		t.Errorf("expected type is %s, but got %s", ast.C_int, ty)
+	if ty.Primitive != ast.C_int {
+		t.Errorf("expected type is %s, but got %s", ast.C_int, ty.Primitive)
 	}
 	p = NewParser([]byte("char"))
 	ty = p.readType()
-	if ty != ast.C_char {
-		t.Errorf("expected type is %s, but got %s", ast.C_char, ty)
+	if ty.Primitive != ast.C_char {
+		t.Errorf("expected type is %s, but got %s", ast.C_char, ty.Primitive)
 	}
 	p = NewParser([]byte("int *"))
 	ty = p.readType()
-	if ty != ast.C_pointer {
-		t.Errorf("expected type is %s, but got %s", ast.C_pointer, ty)
+	if ty.Primitive != ast.C_int {
+		t.Errorf("expected type is %s, but got %s", ast.C_int, ty.Primitive)
+	}
+	if !ty.Ptr {
+		t.Errorf("expected type is pointer")
 	}
 }
 
@@ -306,8 +312,11 @@ func TestParseArray(t *testing.T) {
 	if !ok {
 		t.Errorf("expected type is ArrayDef, but got %s", reflect.TypeOf(e))
 	}
-	if v.Type != ast.C_int {
-		t.Errorf("expected type is %s, but got %s", ast.C_int, v.Type)
+	if v.Type.Primitive != ast.C_int {
+		t.Errorf("expected type is %s, but got %s", ast.C_int, v.Type.Primitive)
+	}
+	if !v.Type.Array {
+		t.Errorf("expected type is array")
 	}
 	if v.Token.String() != "a" {
 		t.Errorf("expected name is %s, but got %s", "a", v.Token.String())
@@ -443,12 +452,12 @@ func TestDecrement(t *testing.T) {
 	}
 }
 
-func TestNotEqual(t *testing.T) {
-	p := NewParser([]byte("if (a != 1) {}"))
-	b := p.ifStmt()
-	fmt.Println((*b.Expr))
-	// i1 := b.Nodes[0].(ast.ExprStmt).Expr.(ast.DecExpr)
-	// if i1.Ident.Token.String() != "a" {
-	// 	t.Errorf("expected ident is %s, but got %s", "a", i1.Ident.Token)
-	// }
-}
+// func TestNotEqual(t *testing.T) {
+// 	p := NewParser([]byte("if (a != 1) {}"))
+// 	b := p.ifStmt()
+// 	fmt.Println((*b.Expr))
+// 	// i1 := b.Nodes[0].(ast.ExprStmt).Expr.(ast.DecExpr)
+// 	// if i1.Ident.Token.String() != "a" {
+// 	// 	t.Errorf("expected ident is %s, but got %s", "a", i1.Ident.Token)
+// 	// }
+// }

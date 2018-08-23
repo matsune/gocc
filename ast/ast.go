@@ -34,34 +34,45 @@ const (
 	IF_STMT
 )
 
-type CType int
+type PrimitiveType int
 
 const (
-	C_int CType = iota
+	C_int PrimitiveType = iota
 	C_void
 	C_char
 	C_float
 	C_long
 	C_short
 	C_double
-	C_pointer
+	// C_pointer
 )
 
-func (t CType) Bytes() int {
-	switch t {
+func (p PrimitiveType) Bytes() int {
+	switch p {
 	case C_int:
 		return 4
 	case C_char:
 		return 1
-	case C_pointer:
-		return 8
 	default:
 		panic("unimplemented type size")
 	}
 }
 
-func (t CType) String() string {
-	switch t {
+func (t CType) Bytes() int {
+	if t.Ptr {
+		return 8
+	}
+	return t.Primitive.Bytes()
+}
+
+type CType struct {
+	Primitive PrimitiveType
+	Ptr       bool
+	Array     bool
+}
+
+func (p PrimitiveType) String() string {
+	switch p {
 	case C_int:
 		return "int"
 	case C_void:
@@ -76,11 +87,17 @@ func (t CType) String() string {
 		return "short"
 	case C_double:
 		return "double"
-	case C_pointer:
-		return "pointer"
 	default:
 		panic("undefined Type")
 	}
+}
+
+func (t CType) String() string {
+	s := t.Primitive.String()
+	if t.Ptr {
+		s += " *"
+	}
+	return s
 }
 
 type (

@@ -12,6 +12,7 @@ type Column struct {
 	pos int
 	ty  ast.CType
 }
+
 type Map map[string]Column
 
 type Gen struct {
@@ -42,6 +43,25 @@ func argsRegister(i int, t ast.CType) Register {
 		return registerR8(t)
 	case 5:
 		return registerR9(t)
+	default:
+		panic("max i is 5")
+	}
+}
+
+func argsRegisterPtr(i int) Register {
+	switch i {
+	case 0:
+		return RDI
+	case 1:
+		return RSI
+	case 2:
+		return RDX
+	case 3:
+		return RCX
+	case 4:
+		return R8
+	case 5:
+		return R9
 	default:
 		panic("max i is 5")
 	}
@@ -204,14 +224,18 @@ func (gen *Gen) expr(e ast.Expr) {
 		gen.binary(v)
 	case ast.Ident:
 		if col, ok := gen.lookup(v.Token.String()); ok {
-			gen.emitf("\t%s \t%d(%s), %s\n", mov(col.ty), -col.pos, RBP, registerA(col.ty))
+			if col.ty.Array {
+				gen.emitf("\t%s \t%d(%s), %s\n", LEAQ, -col.pos, RBP, RAX)
+			} else {
+				gen.emitf("\t%s \t%d(%s), %s\n", mov(col.ty), -col.pos, RBP, registerA(col.ty))
+			}
 		} else {
 			panic("ident is not defined")
 		}
 	case ast.IntVal:
-		gen.emit(mov(ast.C_int), v, registerA(ast.C_int))
+		gen.emit(MOVL, v, EAX)
 	case ast.CharVal:
-		gen.emit(mov(ast.C_char), v, registerA(ast.C_char))
+		gen.emit(MOVB, v, AL)
 	case ast.FuncCall:
 		gen.funcCall(v)
 	case ast.UnaryExpr:
@@ -226,8 +250,8 @@ func (gen *Gen) expr(e ast.Expr) {
 		gen.subscriptExpr(v)
 	case ast.IncExpr:
 		if col, ok := gen.lookup(v.Ident.Token.String()); ok {
-			if col.ty == ast.C_pointer {
-				gen.emitf("\t%s\t%s, %d(%s)\n", ADDL, "$4", -col.pos, RBP)
+			if col.ty.Ptr {
+				gen.emitf("\t%s\t$%d, %d(%s)\n", ADDQ, col.ty.Primitive.Bytes(), -col.pos, RBP)
 			} else {
 				gen.emitf("\t%s\t%s, %d(%s)\n", ADDL, "$1", -col.pos, RBP)
 			}
@@ -236,8 +260,8 @@ func (gen *Gen) expr(e ast.Expr) {
 		}
 	case ast.DecExpr:
 		if col, ok := gen.lookup(v.Ident.Token.String()); ok {
-			if col.ty == ast.C_pointer {
-				gen.emitf("\t%s\t%s, %d(%s)\n", SUBL, "$4", -col.pos, RBP)
+			if col.ty.Ptr {
+				gen.emitf("\t%s\t%s, %d(%s)\n", SUBQ, "$8", -col.pos, RBP)
 			} else {
 				gen.emitf("\t%s\t%s, %d(%s)\n", SUBL, "$1", -col.pos, RBP)
 			}
@@ -351,8 +375,7 @@ func (gen *Gen) funcCall(e ast.FuncCall) {
 		if i > ARG_COUNT-1 {
 			gen.emit(PUSH, RAX)
 		} else {
-			// FIXME
-			gen.emit(MOVQ, RAX, argsRegister(i, ast.C_pointer))
+			gen.emit(MOVQ, RAX, argsRegisterPtr(i))
 		}
 	}
 	gen.emit(CALL, e.Ident)

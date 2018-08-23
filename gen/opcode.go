@@ -10,6 +10,7 @@ const (
 	MOVL
 	MOVQ
 	ADDL
+	ADDQ
 	SUBL
 	SUBQ
 	IMUL
@@ -53,6 +54,8 @@ func (c Opcode) String() string {
 		return "movq"
 	case ADDL:
 		return "addl"
+	case ADDQ:
+		return "addq"
 	case SUBL:
 		return "subl"
 	case SUBQ:

@@ -86,6 +86,7 @@ func (p *Parser) readVarDef() ast.Node {
 	if p.match(token.LBRACK) {
 
 		s := p.readSubscriptInit()
+		t.Array = true
 		arr := ast.ArrayDef{Type: t, Token: tok, Subscript: s}
 
 		if s == nil && !p.match(token.ASSIGN) {
@@ -163,24 +164,24 @@ func (p *Parser) readType() ast.CType {
 		if p.isType() {
 			switch p.token.Kind {
 			case token.INT:
-				t = ast.C_int
+				t.Primitive = ast.C_int
 			case token.CHAR:
-				t = ast.C_char
+				t.Primitive = ast.C_char
 			case token.VOID:
-				t = ast.C_void
+				t.Primitive = ast.C_void
 			case token.FLOAT:
-				t = ast.C_float
+				t.Primitive = ast.C_float
 			case token.LONG:
-				t = ast.C_long
+				t.Primitive = ast.C_long
 			case token.SHORT:
-				t = ast.C_short
+				t.Primitive = ast.C_short
 			case token.DOUBLE:
-				t = ast.C_double
+				t.Primitive = ast.C_double
 			default:
 				panic("readType")
 			}
 		} else if p.match(token.MUL) { // * as pointer
-			t = ast.C_pointer
+			t.Ptr = true
 		} else {
 			break
 		}
