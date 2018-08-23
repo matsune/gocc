@@ -452,12 +452,40 @@ func TestDecrement(t *testing.T) {
 	}
 }
 
-// func TestNotEqual(t *testing.T) {
-// 	p := NewParser([]byte("if (a != 1) {}"))
-// 	b := p.ifStmt()
-// 	fmt.Println((*b.Expr))
-// 	// i1 := b.Nodes[0].(ast.ExprStmt).Expr.(ast.DecExpr)
-// 	// if i1.Ident.Token.String() != "a" {
-// 	// 	t.Errorf("expected ident is %s, but got %s", "a", i1.Ident.Token)
-// 	// }
-// }
+func TestForStmt(t *testing.T) {
+	p := NewParser([]byte("for(int i = 0; i < 10; i++) { 1 + 2; }"))
+	f := p.forStmt()
+	if f.E1 == nil {
+		t.Errorf("expression 1 is null")
+	}
+	e1 := f.E1.(ast.VarDef)
+	if e1.Type.Primitive != ast.C_int {
+		t.Errorf("expected expression 1 varDef type is %s, but got %s", ast.C_int, e1.Type.Primitive)
+	}
+
+	e2 := (*f.E2).(ast.BinaryExpr)
+	if e2.Op.Kind != token.LT {
+		t.Errorf("expected expression 2 op is %s, but got %s", token.LT, e2.Op.Kind)
+	}
+	if x := e2.X.(ast.Ident); x.Token.String() != "i" {
+		t.Errorf("expected expression 2 x is %s, but got %s", "i", x.Token.String())
+	}
+	if y := e2.Y.(ast.IntVal); y.Num != 10 {
+		t.Errorf("expected expression 2 y is %d, but got %d", 10, y.Num)
+	}
+
+	e3 := (*f.E3).(ast.IncExpr)
+	if e3.Ident.Token.String() != "i" {
+		t.Errorf("expected expression 3 ident is %s, but got %s", "i", e3.Ident.Token.String())
+	}
+	b := f.Block.Nodes[0].(ast.ExprStmt).Expr.(ast.BinaryExpr)
+	if b.Op.Kind != token.ADD {
+		t.Errorf("expected binary op is %s, but got %s", token.ADD, b.Op.Kind)
+	}
+	if x := b.X.(ast.IntVal); x.Num != 1 {
+		t.Errorf("expected binary x is %d, but got %d", 1, x.Num)
+	}
+	if y := b.Y.(ast.IntVal); y.Num != 2 {
+		t.Errorf("expected binary y is %d, but got %d", 2, y.Num)
+	}
+}

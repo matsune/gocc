@@ -32,6 +32,7 @@ const (
 	RETURN_STMT
 	EXPR_STMT
 	IF_STMT
+	FOR_STMT
 )
 
 type PrimitiveType int
@@ -44,7 +45,6 @@ const (
 	C_long
 	C_short
 	C_double
-	// C_pointer
 )
 
 func (p PrimitiveType) Bytes() int {
@@ -228,6 +228,13 @@ type (
 		Block BlockStmt
 		Else  *IfStmt
 	}
+
+	ForStmt struct {
+		E1    Node
+		E2    *Expr
+		E3    *Expr
+		Block BlockStmt
+	}
 )
 
 func (VarDef) Kind() Kind        { return VAR_DEF }
@@ -252,6 +259,7 @@ func (BlockStmt) Kind() Kind     { return BLOCK_STMT }
 func (ReturnStmt) Kind() Kind    { return RETURN_STMT }
 func (ExprStmt) Kind() Kind      { return EXPR_STMT }
 func (IfStmt) Kind() Kind        { return IF_STMT }
+func (ForStmt) Kind() Kind       { return FOR_STMT }
 
 func (Ident) expr()         {}
 func (BinaryExpr) expr()    {}
@@ -272,6 +280,7 @@ func (BlockStmt) stmt()  {}
 func (ReturnStmt) stmt() {}
 func (ExprStmt) stmt()   {}
 func (IfStmt) stmt()     {}
+func (ForStmt) stmt()    {}
 
 func (i IntVal) Str() string  { return fmt.Sprintf("$%d", i.Num) }
 func (c CharVal) Str() string { return "$" + fmt.Sprintf("%d", c.Token.Str[0]) }

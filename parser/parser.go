@@ -111,9 +111,6 @@ func (p *Parser) readVarDef() ast.Node {
 		n = v
 	}
 
-	p.assert(token.SEMICOLON)
-	p.next()
-
 	return n
 }
 
@@ -648,6 +645,10 @@ func (p *Parser) blockStmt() ast.BlockStmt {
 		if p.isType() {
 			d := p.readVarDef()
 			n.Nodes = append(n.Nodes, d)
+
+			p.assert(token.SEMICOLON)
+			p.next()
+
 		} else {
 			stmt := p.stmt()
 			n.Nodes = append(n.Nodes, stmt)
@@ -709,7 +710,54 @@ func (p *Parser) isIterationStmt() bool {
 }
 
 func (p *Parser) iterationStmt() ast.Stmt {
-	panic("iterationStmt")
+	switch {
+	case p.match(token.FOR):
+		return p.forStmt()
+	default:
+		panic("iterationStmt")
+	}
+}
+
+func (p *Parser) forStmt() ast.ForStmt {
+	p.next()
+
+	p.assert(token.LPAREN)
+	p.next()
+
+	f := ast.ForStmt{}
+	if !p.match(token.SEMICOLON) {
+		if p.isType() {
+			v := p.readVarDef()
+			f.E1 = v
+		} else {
+			e := p.expr()
+			f.E1 = e
+		}
+
+		p.assert(token.SEMICOLON)
+	}
+	p.next()
+
+	if !p.match(token.SEMICOLON) {
+		e2 := p.expr()
+
+		f.E2 = &e2
+
+		p.assert(token.SEMICOLON)
+	}
+	p.next()
+
+	if !p.match(token.RPAREN) {
+		e3 := p.expr()
+		f.E3 = &e3
+
+		p.assert(token.RPAREN)
+	}
+	p.next()
+
+	f.Block = p.blockStmt()
+
+	return f
 }
 
 func (p *Parser) isJumpStmt() bool {
